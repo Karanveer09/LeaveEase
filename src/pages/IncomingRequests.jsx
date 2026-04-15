@@ -88,9 +88,12 @@ export default function IncomingRequests() {
   };
 
   const filteredRequests = requests.filter(r => {
+    // Hide 'cancelled' requests from all views as they were filled by others
+    if (r.status === 'cancelled') return false;
     if (filter === 'all') return true;
     return r.status === filter;
   });
+
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 

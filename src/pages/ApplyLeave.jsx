@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createLeave } from '../services/leaveService';
+import { createLeave, getMyLeaves } from '../services/leaveService';
+
 import { 
   Calendar, 
   FileText, 
@@ -25,10 +26,28 @@ export default function ApplyLeave() {
   const [reason, setReason] = useState('');
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [dayLectures, setDayLectures] = useState([]);
+  const [myExistingLeaves, setMyExistingLeaves] = useState([]);
   const [error, setError] = useState('');
+
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (user) {
+      fetchMyLeaves();
+    }
+  }, [user]);
+
+  const fetchMyLeaves = async () => {
+    try {
+      const leaves = await getMyLeaves(user._id);
+      setMyExistingLeaves(leaves);
+    } catch (err) {
+      console.error('Failed to fetch leaves for validation:', err);
+    }
+  };
+
   const handleDateChange = (e) => {
+
     const selectedDate = e.target.value;
     setDate(selectedDate);
     setSelectedSlots([]);
@@ -48,12 +67,26 @@ export default function ApplyLeave() {
     }
 
     setError('');
-    const lectures = user.timetable?.[dayName] || [];
-    setDayLectures(lectures);
 
-    if (lectures.length === 0) {
+    // Filter active leaves on this date
+    const leavesOnDate = myExistingLeaves.filter(l => l.date === selectedDate && l.status !== 'cancelled');
+    const takenSlots = leavesOnDate.flatMap(l => l.lecturesOnLeave.filter(lec => !lec.cancelled).map(lec => lec.slot));
+
+    const lectures = user.timetable?.[dayName] || [];
+    // Mark lectures as already managed if they exist in takenSlots
+    const processedLectures = lectures.map(l => ({
+      ...l,
+      isAlreadyManaged: takenSlots.includes(l.slot)
+    }));
+
+    setDayLectures(processedLectures);
+
+    if (processedLectures.length === 0) {
       setError(`You don't have any lectures scheduled on ${dayName}. No leave application needed.`);
+    } else if (processedLectures.every(l => l.isAlreadyManaged)) {
+      setError(`All your lectures on ${selectedDate} are already included in other leave applications.`);
     }
+
   };
 
   const toggleSlot = (slot) => {
@@ -161,21 +194,31 @@ export default function ApplyLeave() {
                   const lecture = dayLectures.find(l => l.slot === slotNum);
                   const isSelected = selectedSlots.includes(slotNum);
                   const hasLecture = !!lecture;
+                  const isManaged = lecture?.isAlreadyManaged;
 
                   return (
                     <div
                       key={slotNum}
-                      className={`timetable-slot ${hasLecture ? 'has-lecture' : ''} ${isSelected ? 'selected' : ''}`}
-                      onClick={() => hasLecture && toggleSlot(slotNum)}
-                      style={{ cursor: hasLecture ? 'pointer' : 'not-allowed', opacity: hasLecture ? 1 : 0.5 }}
+                      className={`timetable-slot ${hasLecture ? 'has-lecture' : ''} ${isSelected ? 'selected' : ''} ${isManaged ? 'managed' : ''}`}
+                      onClick={() => hasLecture && !isManaged && toggleSlot(slotNum)}
+                      style={{ 
+                        cursor: (hasLecture && !isManaged) ? 'pointer' : 'not-allowed', 
+                        opacity: (hasLecture && !isManaged) ? 1 : 0.5,
+                        position: 'relative'
+                      }}
                     >
                       <div className="timetable-slot-num">{slotNum}</div>
                       <div className="timetable-slot-subject">
-                        {hasLecture ? lecture.subject : 'Free'}
+                        {isManaged ? 'Managed' : (hasLecture ? lecture.subject : 'Free')}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {SLOT_TIMES[slotNum]}
                       </div>
+                      {isManaged && (
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px', fontStyle: 'italic' }}>
+                          Already Applied
+                        </div>
+                      )}
                       {isSelected && (
                         <div style={{ position: 'absolute', top: '8px', right: '8px', color: 'var(--accent-primary)', display: 'flex' }}>
                           <CheckCircle2 size={16} />
@@ -183,6 +226,7 @@ export default function ApplyLeave() {
                       )}
                     </div>
                   );
+
                 })}
               </div>
 

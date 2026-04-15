@@ -169,3 +169,9 @@ export const approvePasswordRequest = async (requestId) => {
   return passReqsCollection.update(requestId, { status: 'approved' });
 };
 
+// ====== Activity Tracking ======
+export const updateLastActive = async (uid) => {
+  const user = usersCollection.getById(uid);
+  if (!user) return null;
+  return usersCollection.update(uid, { lastActive: new Date().toISOString() });
+};

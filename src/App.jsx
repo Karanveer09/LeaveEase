@@ -14,6 +14,7 @@ import IncomingRequests from './pages/IncomingRequests';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageTeachers from './pages/admin/ManageTeachers';
 import ManageTimetable from './pages/admin/ManageTimetable';
+import FacultyActivity from './pages/admin/FacultyActivity';
 import Profile from './pages/Profile';
 
 function SetupGuard({ children }) {
@@ -47,6 +48,7 @@ function AppContent() {
                 <Route path="/dashboard" element={<AdminDashboard />} />
                 <Route path="/manage-teachers" element={<ManageTeachers />} />
                 <Route path="/timetable" element={<ManageTimetable />} />
+                <Route path="/activity" element={<FacultyActivity />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="*" element={<AdminDashboard />} />
               </Routes>

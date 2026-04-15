@@ -116,7 +116,7 @@ export const acceptRequest = async (requestId, userId) => {
   if (alreadyCovered.length > 0) {
     // Reject this one automatically
     substitutionsCollection.update(requestId, { 
-      status: 'rejected',
+      status: 'cancelled',
       rejectionReason: 'Slot already covered by another teacher'
     });
     throw new Error('This slot has already been covered by another teacher');
@@ -164,7 +164,7 @@ export const acceptRequest = async (requestId, userId) => {
   
   for (const pending of pendingRequests) {
     substitutionsCollection.update(pending._id, {
-      status: 'rejected',
+      status: 'cancelled',
       rejectionReason: 'Slot covered by another teacher'
     });
   }
@@ -219,5 +219,44 @@ export const getAvailableTeachers = async (dateStr, slot, currentUserId) => {
   
   const busyTeacherIds = busySubs.map(req => req.toTeacherId);
 
-  return availableTeachers.filter(t => !busyTeacherIds.includes(t._id));
+  return availableTeachers.filter(t => !busyTeacherIds.includes(t._id)).map(t => {
+    const daySchedule = t.timetable?.[dayName] || [];
+    const totalLecturesDay = daySchedule.length;
+    
+    // check if they have accepted substitution requests for other slots on this day
+    const acceptedSubsToday = allRequests.filter(req => 
+      req.date === dateStr && 
+      req.toTeacherId === t._id && 
+      req.status === 'accepted'
+    );
+    
+    const effectiveTotalLectures = totalLecturesDay + acceptedSubsToday.length;
+
+    // Check continuous from original timetable AND substitutions
+    const hasTimetableContinuous = daySchedule.some(l => l.slot === slotNum - 1 || l.slot === slotNum + 1);
+    const hasSubContinuous = acceptedSubsToday.some(req => req.lectureSlot === slotNum - 1 || req.lectureSlot === slotNum + 1);
+    const hasContinuous = hasTimetableContinuous || hasSubContinuous;
+
+    return {
+      ...t,
+      effectiveTotalLectures,
+      hasContinuous
+    };
+  });
+};
+// Cancel requests for a specific slot (used when slot is cancelled from leave)
+export const cancelRequestsBySlot = async (leaveId, slotNum) => {
+  const allRequests = substitutionsCollection.getAll();
+  const affectedRequests = allRequests.filter(req => 
+    req.leaveApplicationId === leaveId && 
+    req.lectureSlot === parseInt(slotNum) &&
+    (req.status === 'pending' || req.status === 'accepted')
+  );
+
+  for (const req of affectedRequests) {
+    substitutionsCollection.update(req._id, { 
+      status: 'cancelled',
+      rejectionReason: 'The teacher has cancelled this specific lecture leave'
+    });
+  }
 };

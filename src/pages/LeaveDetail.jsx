@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getLeaveById } from '../services/leaveService';
+import { getLeaveById, cancelLectureFromLeave } from '../services/leaveService';
+
 import { getOutgoingRequests, sendSubstitutionRequest, getAvailableTeachers } from '../services/substitutionService';
 import { 
   ArrowLeft, 
@@ -64,7 +65,12 @@ export default function LeaveDetail() {
         .filter(r => r.lectureSlot === slot && r.status === 'pending')
         .map(r => r.toTeacherId);
 
-      const filtered = teachers.filter(t => !pendingRequestTeacherIds.includes(t._id));
+      let filtered = teachers.filter(t => !pendingRequestTeacherIds.includes(t._id));
+
+
+      // Sort by fewest lectures first (free on top, busy on bottom)
+      filtered.sort((a, b) => a.effectiveTotalLectures - b.effectiveTotalLectures);
+
       setAvailableTeachersList(filtered);
     } catch (err) {
       setError(err.message || 'Failed to find available teachers');
@@ -99,6 +105,46 @@ export default function LeaveDetail() {
       setSendingTo(null);
     }
   };
+
+  const cancelSlot = async (slotNum) => {
+    if (!window.confirm(`Are you sure you want to cancel the leave for slot ${slotNum}? Any active substitution requests for this slot will be revoked.`)) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await cancelLectureFromLeave(leave._id, slotNum, user._id);
+      setSuccess(`Slot ${slotNum} cancelled successfully.`);
+      await fetchData();
+    } catch (err) {
+      setError(err.message || 'Failed to cancel slot');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isCancellable = (slotNum) => {
+    const now = new Date();
+    const leaveDateObj = new Date(leave.date + 'T00:00:00');
+    
+    // Future date
+    if (leaveDateObj.getTime() > new Date().setHours(0,0,0,0)) return true;
+    
+    // Past date
+    if (leaveDateObj.getTime() < new Date().setHours(0,0,0,0)) return false;
+    
+    // Today
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    if (slotNum <= 4) {
+      return currentMins < 8 * 60 + 50; // 8:50 AM
+    } else {
+      return currentMins < 12 * 60 + 10; // 12:10 PM
+    }
+  };
+
 
   const formatDate = (dateStr) => {
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-IN', {
@@ -188,22 +234,43 @@ export default function LeaveDetail() {
           const slotRequests = requests.filter(r => r.lectureSlot === lecture.slot);
           const pendingReqs = slotRequests.filter(r => r.status === 'pending');
           const rejectedReqs = slotRequests.filter(r => r.status === 'rejected');
+          // 'cancelled' requests are ignored as per user request to not show them as declined
+
 
           return (
             <div key={lecture.slot} className={`lecture-slot ${lecture.covered ? 'covered' : 'uncovered'}`}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <div className="timetable-slot-num" style={{ background: lecture.covered ? '#059669' : 'var(--accent-primary)', color: 'white', fontSize: '1rem', width: '36px', height: '36px', margin: 0 }}>
+                  <div className="timetable-slot-num" style={{ background: lecture.cancelled ? '#6b7280' : (lecture.covered ? '#059669' : 'var(--accent-primary)'), color: 'white', fontSize: '1rem', width: '36px', height: '36px', margin: 0 }}>
                     {lecture.slot}
                   </div>
                   <div>
-                    <div className="slot-subject" style={{ fontSize: '1.1rem', margin: 0 }}>{lecture.subject}</div>
+                    <div className="slot-subject" style={{ fontSize: '1.1rem', margin: 0, textDecoration: lecture.cancelled ? 'line-through' : 'none', color: lecture.cancelled ? 'var(--text-muted)' : 'inherit' }}>
+                      {lecture.subject}
+                    </div>
                     <div className="slot-time" style={{ fontWeight: 500 }}>{SLOT_TIMES[lecture.slot]}</div>
                   </div>
                 </div>
-                <span className={`badge ${lecture.covered ? 'badge-accepted' : 'badge-pending'}`}>
-                  {lecture.covered ? 'Covered' : 'Uncovered'}
-                </span>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {isOwner && !lecture.cancelled && isCancellable(lecture.slot) && (
+                    <button 
+                      onClick={() => cancelSlot(lecture.slot)}
+                      className="btn btn-outline btn-sm"
+                      style={{ color: '#dc2626', borderColor: '#dc2626', fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Cancel Leave
+                    </button>
+                  )}
+                  {isOwner && !lecture.cancelled && !isCancellable(lecture.slot) && (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Locked
+                    </span>
+                  )}
+                  <span className={`badge ${lecture.cancelled ? 'badge-cancelled' : (lecture.covered ? 'badge-accepted' : 'badge-pending')}`}>
+                    {lecture.cancelled ? 'Cancelled' : (lecture.covered ? 'Covered' : 'Uncovered')}
+                  </span>
+                </div>
+
               </div>
 
               {/* Covered by */}
@@ -279,30 +346,77 @@ export default function LeaveDetail() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto' }}>
-                {availableTeachersList.map((teacher, index) => (
-                  <div key={teacher._id} className="teacher-card" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <div className="teacher-info">
-                      <div className="teacher-avatar" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--accent-primary)' }}>
-                        <User size={18} />
+                {(() => {
+                  const preferredTeachers = availableTeachersList.filter(t => !t.hasContinuous);
+                  const continuousTeachers = availableTeachersList.filter(t => t.hasContinuous);
+
+                  const renderTeacher = (teacher, index) => {
+                    const isRecommended = teacher.effectiveTotalLectures <= 2 && !teacher.hasContinuous;
+                    return (
+                      <div key={teacher._id} className="teacher-card" style={{ animationDelay: `${index * 0.05}s` }}>
+                        <div className="teacher-info">
+                          <div className="teacher-avatar" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--accent-primary)' }}>
+                            <User size={18} />
+                          </div>
+                          <div>
+                            <div className="teacher-name" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {teacher.name}
+                              {isRecommended && (
+                                <span style={{ fontSize: '0.75rem', color: '#059669', background: 'rgba(5, 150, 105, 0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                                  (Recommended)
+                                </span>
+                              )}
+                            </div>
+                            <div className="teacher-dept">
+                              {teacher.department} • {teacher.effectiveTotalLectures} lecture{teacher.effectiveTotalLectures !== 1 ? 's' : ''} today
+                            </div>
+                          </div>
+                        </div>
+                        {(() => {
+                          const existingReq = requests.find(r => r.toTeacherId === teacher._id && r.lectureSlot === selectedSlot);
+                          if (existingReq && existingReq.status === 'rejected') {
+                            return (
+                              <button className="btn btn-outline btn-sm" disabled style={{ opacity: 0.6, cursor: 'not-allowed', color: '#dc2626', borderColor: '#dc2626' }}>
+                                Declined
+                              </button>
+                            );
+                          }
+                          return (
+                            <button
+                              className="btn btn-success btn-sm"
+                              onClick={() => sendRequest(teacher._id)}
+                              disabled={sendingTo === teacher._id}
+                            >
+                              {sendingTo === teacher._id ? (
+                                <span className="spinner" style={{ width: '16px', height: '16px' }}></span>
+                              ) : (
+                                'Send Request'
+                              )}
+                            </button>
+                          );
+                        })()}
                       </div>
-                      <div>
-                        <div className="teacher-name">{teacher.name}</div>
-                        <div className="teacher-dept">{teacher.department}</div>
-                      </div>
-                    </div>
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => sendRequest(teacher._id)}
-                      disabled={sendingTo === teacher._id}
-                    >
-                      {sendingTo === teacher._id ? (
-                        <span className="spinner" style={{ width: '16px', height: '16px' }}></span>
-                      ) : (
-                        'Send Request'
+
+                    );
+                  };
+
+                  return (
+                    <>
+                      {preferredTeachers.map((t, i) => renderTeacher(t, i))}
+                      
+                      {continuousTeachers.length > 0 && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem', fontWeight: 700 }}>
+                            Faculty having continuous lectures
+                          </h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {continuousTeachers.map((t, i) => renderTeacher(t, i + preferredTeachers.length))}
+                          </div>
+                        </div>
                       )}
-                    </button>
-                  </div>
-                ))}
+                    </>
+                  );
+                })()}
               </div>
             )}
 

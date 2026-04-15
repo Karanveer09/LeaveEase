@@ -13,7 +13,8 @@ import {
   ShieldCheck, 
   GraduationCap,
   Power,
-  Sparkles
+  Sparkles,
+  Activity
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -57,6 +58,10 @@ export default function Sidebar() {
               <Link to="/admin/timetable" className={`nav-link ${isActive('/admin/timetable')}`}>
                 <span className="nav-icon"><Calendar size={20} /></span>
                 <span>Timetable</span>
+              </Link>
+              <Link to="/admin/activity" className={`nav-link ${isActive('/admin/activity')}`}>
+                <span className="nav-icon"><Activity size={20} /></span>
+                <span>Activity</span>
               </Link>
             </>
           ) : (

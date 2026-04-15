@@ -25,7 +25,9 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (loading) return null;
+  // Removed loading check to allow instant rendering when navigating back
+  // if (loading) return null;
+
 
   const faqs = [
     { q: "How do I request a substitute?", a: "Simply log into the Faculty Portal, select the 'Apply Leave' module, choose your inactive slots, and select an available teacher from the automated drop-down. LeaveFlow handles the rest!" },

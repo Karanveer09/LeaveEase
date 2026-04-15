@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser, logoutUser, getCurrentUserProfile, updateTeacherProfile } from '../services/authService';
+import { loginUser, logoutUser, getCurrentUserProfile, updateTeacherProfile, updateLastActive } from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -18,6 +18,10 @@ export function AuthProvider({ children }) {
         try {
           const { uid } = JSON.parse(authData);
           const profile = await getCurrentUserProfile(uid);
+          if (profile) {
+            await updateLastActive(uid);
+            profile.lastActive = new Date().toISOString();
+          }
           setUser(profile);
         } catch (err) {
           console.error("Failed to fetch user profile:", err);
@@ -33,6 +37,8 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const profile = await loginUser(email, password);
+    await updateLastActive(profile._id);
+    profile.lastActive = new Date().toISOString();
     setUser(profile);
     return profile;
   };
