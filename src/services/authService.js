@@ -90,6 +90,12 @@ export const getAllTeachers = async () => {
   return users.filter(u => u.role === 'teacher');
 };
 
+// Get All Admins
+export const getAllAdmins = async () => {
+  const users = usersCollection.getAll();
+  return users.filter(u => u.role === 'admin');
+};
+
 // Get All Teachers (except given user)
 export const getAllTeachersInfo = async (currentUid) => {
   const users = usersCollection.getAll();
@@ -128,15 +134,15 @@ const passReqsCollection = localCollection('passwordRequests');
 
 export const requestPasswordReset = async (email) => {
   const users = usersCollection.getAll();
-  const user = users.find(u => u.email === email && u.role === 'teacher');
-  if (!user) throw new Error("No teacher account found with this email.");
+  const user = users.find(u => u.email === email);
+  if (!user) throw new Error("No account found with this email.");
   
   const existing = passReqsCollection.getAll().find(r => r.email === email);
   if (existing) return existing;
   
   return passReqsCollection.add({ 
     email, 
-    status: 'pending', 
+    status: user.role === 'admin' ? 'approved' : 'pending', 
     teacherName: user.name,
     createdAt: new Date().toISOString() 
   });

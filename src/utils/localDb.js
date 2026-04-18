@@ -3,7 +3,13 @@ const DB_KEY = 'leave_app_demo_db';
 const getDb = () => {
   const dbStr = localStorage.getItem(DB_KEY);
   if (!dbStr) {
-    const initDb = { users: [], leaves: [], substitutionRequests: [] };
+    const initDb = { 
+      users: [], 
+      leaves: [], 
+      substitutionRequests: [], 
+      holidays: [], 
+      timetableOverrides: [] 
+    };
     localStorage.setItem(DB_KEY, JSON.stringify(initDb));
     return initDb;
   }

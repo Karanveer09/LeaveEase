@@ -67,8 +67,11 @@ export default function LandingPage() {
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <a href="#vision" style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'none' }} className="d-md-block">Vision</a>
             <a href="#faq" style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'none', marginRight: '1rem' }} className="d-md-block">FAQ</a>
-            <button onClick={() => navigate('/login')} className="btn btn-primary" style={{ padding: '0.6rem 1.75rem', borderRadius: '20px', boxShadow: '0 4px 15px rgba(216,124,36,0.3)' }}>
-              Get Started
+            <button onClick={() => navigate('/login')} className="btn btn-outline" style={{ padding: '0.6rem 1.4rem', borderRadius: '20px', fontSize: '0.9rem' }}>
+              Faculty Login
+            </button>
+            <button onClick={() => navigate('/admin/login')} className="btn btn-primary" style={{ padding: '0.6rem 1.4rem', borderRadius: '20px', fontSize: '0.9rem', boxShadow: '0 4px 15px rgba(216,124,36,0.3)' }}>
+              Admin Portal
             </button>
           </div>
         </div>
@@ -125,7 +128,7 @@ export default function LandingPage() {
 
           {/* Admin Card */}
           <div 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/admin/login')}
             style={{ 
               flex: '1 1 350px', maxWidth: '450px', background: 'var(--text-primary)', borderRadius: '24px', padding: '3rem 2.5rem', 
               cursor: 'pointer', position: 'relative', overflow: 'hidden',

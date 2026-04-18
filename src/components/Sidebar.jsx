@@ -14,7 +14,8 @@ import {
   GraduationCap,
   Power,
   Sparkles,
-  Activity
+  Activity,
+  Palmtree
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -52,8 +53,16 @@ export default function Sidebar() {
                 <span>Reports</span>
               </Link>
               <Link to="/admin/manage-teachers" className={`nav-link ${isActive('/admin/manage-teachers')}`}>
-                <span className="nav-icon"><Users size={20} /></span>
+                <span className="nav-icon"><GraduationCap size={20} /></span>
                 <span>Teachers</span>
+              </Link>
+              <Link to="/admin/manage-admins" className={`nav-link ${isActive('/admin/manage-admins')}`}>
+                <span className="nav-icon"><ShieldCheck size={20} /></span>
+                <span>Admins</span>
+              </Link>
+              <Link to="/admin/holidays" className={`nav-link ${isActive('/admin/holidays')}`}>
+                <span className="nav-icon"><Palmtree size={20} /></span>
+                <span>Holidays</span>
               </Link>
               <Link to="/admin/timetable" className={`nav-link ${isActive('/admin/timetable')}`}>
                 <span className="nav-icon"><Calendar size={20} /></span>

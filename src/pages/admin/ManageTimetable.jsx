@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getAllTeachers, updateTimetable } from '../../services/authService';
+import { setSaturdayOverride, getSaturdayOverrides, deleteSaturdayOverride } from '../../services/adminService';
 import { 
   User, 
   ClipboardList, 
   Upload, 
   Save, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  CalendarDays,
+  Trash2,
+  Clock
 } from 'lucide-react';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
@@ -31,7 +35,21 @@ export default function ManageTimetable() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadJson, setUploadJson] = useState('');
 
-  useEffect(() => { fetchTeachers(); }, []);
+  // Saturday Overrides
+  const [overrides, setOverrides] = useState([]);
+  const [satDate, setSatDate] = useState('');
+  const [satFollows, setSatFollows] = useState('monday');
+  const [isSettingSat, setIsSettingSat] = useState(false);
+
+  useEffect(() => { 
+    fetchTeachers(); 
+    fetchOverrides();
+  }, []);
+
+  const fetchOverrides = async () => {
+    const o = await getSaturdayOverrides();
+    setOverrides(o);
+  };
 
   const fetchTeachers = async () => {
     try {
@@ -138,6 +156,41 @@ export default function ManageTimetable() {
       setUploadJson('');
     } catch (err) {
       alert(`Invalid JSON format: ${err.message}`);
+    }
+  };
+
+  const handleSetSaturday = async (e) => {
+    e.preventDefault();
+    if (!satDate) return;
+
+    // Check if it's actually a Saturday
+    const d = new Date(satDate + 'T00:00:00');
+    if (d.getDay() !== 6) {
+      setError('Please select a Saturday date.');
+      return;
+    }
+
+    setIsSettingSat(true);
+    setSuccess('');
+    setError('');
+    try {
+      await setSaturdayOverride(user._id, { date: satDate, followsDay: satFollows });
+      setSuccess(`Saturday ${satDate} set to follow ${satFollows} timetable.`);
+      setSatDate('');
+      fetchOverrides();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSettingSat(false);
+    }
+  };
+
+  const handleDeleteOverride = async (id) => {
+    try {
+      await deleteSaturdayOverride(user._id, id);
+      fetchOverrides();
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -423,6 +476,57 @@ export default function ManageTimetable() {
           </div>
         </div>
       )}
+      {/* Saturday Management Section */}
+      <div className="card-flat animate-in stagger-4" style={{ marginTop: '2rem', borderTop: '4px solid #f59e0b' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <CalendarDays size={20} className="text-warning" style={{ color: '#f59e0b' }} /> Configure Working Saturday
+        </h2>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+          <form onSubmit={handleSetSaturday} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label">Select Saturday</label>
+                <input type="date" className="form-input" value={satDate} onChange={e => setSatDate(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Follows Timetable</label>
+                <select className="form-input" value={satFollows} onChange={e => setSatFollows(e.target.value)}>
+                  {DAYS.map(d => (
+                    <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={isSettingSat} style={{ background: '#f59e0b', borderColor: '#f59e0b' }}>
+              {isSettingSat ? <span className="spinner"></span> : 'Set Working Saturday'}
+            </button>
+          </form>
+
+          <div>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-secondary)' }}>Upcoming Configured Saturdays</h3>
+            {overrides.length === 0 ? (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No Saturdays configured as working days.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {overrides.map(o => (
+                  <div key={o._id} className="teacher-card" style={{ padding: '0.75rem 1rem', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.1)' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Saturday, {new Date(o.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Clock size={12} /> Follows {o.followsDay}
+                      </div>
+                    </div>
+                    <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => handleDeleteOverride(o._id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -138,12 +138,26 @@ export const seedDatabase = async () => {
       leavesCollection.setAll([]);
       subsCollection.setAll([]);
 
-      // Seed admin
-      const savedAdmin = usersCollection.add({
-        ...adminUser,
-        createdAt: new Date().toISOString()
-      });
-      console.log(`Created admin: ${adminUser.name}`);
+      // Seed 3 admins
+      const admins = [
+        { name: 'Admin 1', email: 'admin1@college.edu', password: 'admin123' },
+        { name: 'Admin 2', email: 'admin2@college.edu', password: 'admin123' },
+        { name: 'Admin 3', email: 'admin3@college.edu', password: 'admin123' },
+      ];
+
+      for (const a of admins) {
+        usersCollection.add({
+          name: a.name,
+          email: a.email,
+          password: a.password,
+          department: 'Administration',
+          role: 'admin',
+          profileSetup: true,
+          timetable: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] },
+          createdAt: new Date().toISOString()
+        });
+        console.log(`Created admin: ${a.name}`);
+      }
 
       // Seed teachers
       for (const teacher of sampleTeachers) {

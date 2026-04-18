@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getMyLeaves } from '../services/leaveService';
 import { getIncomingRequests } from '../services/substitutionService';
+import { getHolidays, getSaturdayOverrides } from '../services/adminService';
 import { 
   FileText, 
   Clock, 
@@ -11,7 +12,10 @@ import {
   PlusCircle, 
   Calendar,
   AlertCircle,
-  User
+  User,
+  Palmtree,
+  CalendarDays,
+  Bell
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -19,6 +23,8 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ leaves: 0, pending: 0, incoming: 0, accepted: 0 });
   const [recentLeaves, setRecentLeaves] = useState([]);
   const [recentRequests, setRecentRequests] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+  const [overrides, setOverrides] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,8 +35,12 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const leaves = await getMyLeaves(user._id);
-      const incoming = await getIncomingRequests(user._id);
+      const [leaves, incoming, h, o] = await Promise.all([
+        getMyLeaves(user._id),
+        getIncomingRequests(user._id),
+        getHolidays(),
+        getSaturdayOverrides()
+      ]);
 
       setStats({
         leaves: leaves.length,
@@ -41,6 +51,10 @@ export default function Dashboard() {
 
       setRecentLeaves(leaves.slice(0, 5));
       setRecentRequests(incoming.filter(r => r.status === 'pending').slice(0, 5));
+      
+      const today = new Date().toISOString().split('T')[0];
+      setHolidays(h.filter(holiday => holiday.date >= today).slice(0, 3));
+      setOverrides(o.filter(override => override.date >= today).slice(0, 3));
       setLoading(false);
     } catch (err) {
       console.error('Dashboard load error:', err);
@@ -78,6 +92,40 @@ export default function Dashboard() {
         <h1 className="page-title accent">{getGreeting()}, {user.name.split(' ').pop()}</h1>
         <p className="page-subtitle">{user.department} Department — Here's your leave overview</p>
       </div>
+
+      {/* Announcements */}
+      {(holidays.length > 0 || overrides.length > 0) && (
+        <div className="animate-in" style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+            <Bell size={18} />
+            <span style={{ fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Announcements</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {holidays.map(h => (
+              <div key={h._id} style={{ background: 'rgba(5, 150, 105, 0.05)', border: '1px solid rgba(5, 150, 105, 0.1)', padding: '1rem', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: '40px', height: '40px', background: 'rgba(5, 150, 105, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+                  <Palmtree size={20} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#059669', fontSize: '0.95rem' }}>Public Holiday: {h.reason}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{formatDate(h.date)}</div>
+                </div>
+              </div>
+            ))}
+            {overrides.map(o => (
+              <div key={o._id} style={{ background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.1)', padding: '1rem', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: '40px', height: '40px', background: 'rgba(217, 119, 6, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+                  <CalendarDays size={20} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#d97706', fontSize: '0.95rem' }}>Working Saturday</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{formatDate(o.date)} — Follows {o.followsDay}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="stats-grid">

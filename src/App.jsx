@@ -4,7 +4,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Sidebar from './components/Sidebar';
 import LandingPage from './pages/LandingPage';
-import Login from './pages/Login';
+import FacultyLogin from './pages/FacultyLogin';
+import AdminLogin from './pages/AdminLogin';
 import ProfileSetup from './pages/ProfileSetup';
 import Dashboard from './pages/Dashboard';
 import ApplyLeave from './pages/ApplyLeave';
@@ -13,7 +14,9 @@ import LeaveDetail from './pages/LeaveDetail';
 import IncomingRequests from './pages/IncomingRequests';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageTeachers from './pages/admin/ManageTeachers';
+import ManageAdmins from './pages/admin/ManageAdmins';
 import ManageTimetable from './pages/admin/ManageTimetable';
+import ManageHolidays from './pages/admin/ManageHolidays';
 import FacultyActivity from './pages/admin/FacultyActivity';
 import Profile from './pages/Profile';
 
@@ -29,7 +32,8 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<FacultyLogin />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
       
       {/* Profile Setup Route (teacher first login) */}
       <Route path="/setup" element={
@@ -47,6 +51,8 @@ function AppContent() {
               <Routes>
                 <Route path="/dashboard" element={<AdminDashboard />} />
                 <Route path="/manage-teachers" element={<ManageTeachers />} />
+                <Route path="/manage-admins" element={<ManageAdmins />} />
+                <Route path="/holidays" element={<ManageHolidays />} />
                 <Route path="/timetable" element={<ManageTimetable />} />
                 <Route path="/activity" element={<FacultyActivity />} />
                 <Route path="/profile" element={<Profile />} />

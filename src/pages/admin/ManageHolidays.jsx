@@ -1,0 +1,177 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { addHoliday, getHolidays, deleteHoliday } from '../../services/adminService';
+import { 
+  Calendar, 
+  Plus, 
+  Trash2, 
+  AlertCircle, 
+  CheckCircle2, 
+  Palmtree,
+  Info
+} from 'lucide-react';
+
+export default function ManageHolidays() {
+  const { user } = useAuth();
+  const [holidays, setHolidays] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
+  const [newDate, setNewDate] = useState('');
+  const [newReason, setNewReason] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => { fetchHolidays(); }, []);
+
+  const fetchHolidays = async () => {
+    try {
+      const h = await getHolidays();
+      setHolidays(h);
+    } catch (err) {
+      setError('Failed to load holidays');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    if (!newDate || !newReason) return;
+    
+    setIsAdding(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await addHoliday(user._id, { date: newDate, reason: newReason });
+      setSuccess('Holiday added successfully!');
+      setNewDate('');
+      setNewReason('');
+      fetchHolidays();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this holiday?')) return;
+    try {
+      await deleteHoliday(user._id, id);
+      setSuccess('Holiday deleted');
+      fetchHolidays();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-IN', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="loading-container">
+          <div className="spinner-lg"></div>
+          <p style={{ marginTop: '1rem', fontWeight: 600 }}>Loading holidays...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-container">
+      <div className="page-header animate-in" style={{ textAlign: 'left' }}>
+        <h1 className="page-title">Manage Public Holidays</h1>
+        <p className="page-subtitle">Declare and oversee official holidays to keep scheduling accurate.</p>
+      </div>
+
+      {error && <div className="alert alert-error animate-in" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <AlertCircle size={18} /> {error}
+      </div>}
+      {success && <div className="alert alert-success animate-in" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <CheckCircle2 size={18} /> {success}
+      </div>}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+        {/* Add Form */}
+        <div className="card-flat animate-in stagger-1" style={{ height: 'fit-content' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Plus size={20} className="text-primary" /> Declare New Holiday
+          </h2>
+          <form onSubmit={handleAdd}>
+            <div className="form-group">
+              <label className="form-label">Holiday Date</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={newDate} 
+                onChange={e => setNewDate(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Reason / Name</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="e.g. Diwali, Independence Day" 
+                value={newReason} 
+                onChange={e => setNewReason(e.target.value)} 
+                required 
+              />
+            </div>
+            <button type="submit" className="btn btn-primary btn-full" disabled={isAdding}>
+              {isAdding ? <span className="spinner"></span> : 'Add Holiday'}
+            </button>
+          </form>
+
+          <div style={{ marginTop: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0' }}>
+            <p style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', gap: '0.5rem', margin: 0 }}>
+              <Info size={16} /> 
+              Adding a holiday will automatically prevent faculty from applying for leave on that day.
+            </p>
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="card-flat animate-in stagger-2">
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Calendar size={20} className="text-primary" /> Active Holidays
+          </h2>
+          
+          {holidays.length === 0 ? (
+            <div className="empty-state" style={{ padding: '3rem 1rem' }}>
+              <Palmtree size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+              <p className="empty-state-text">No public holidays declared yet</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {holidays.map(h => (
+                <div key={h._id} className="teacher-card" style={{ padding: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{h.reason}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{formatDate(h.date)}</div>
+                  </div>
+                  <button 
+                    className="btn btn-ghost btn-sm" 
+                    style={{ color: '#ef4444' }}
+                    onClick={() => handleDelete(h._id)}
+                    title="Remove Holiday"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

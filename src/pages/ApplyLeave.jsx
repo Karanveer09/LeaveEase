@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createLeave, getMyLeaves } from '../services/leaveService';
+import { getHolidays, getSaturdayOverrides } from '../services/adminService';
 
 import { 
   Calendar, 
@@ -9,7 +10,9 @@ import {
   CheckCircle2, 
   Send, 
   AlertCircle,
-  BookOpen
+  BookOpen,
+  Palmtree,
+  CalendarDays
 } from 'lucide-react';
 
 const SLOT_TIMES = {
@@ -17,7 +20,7 @@ const SLOT_TIMES = {
   5: '1:30 - 2:20', 6: '2:20 - 3:10', 7: '3:30 - 4:20', 8: '4:20 - 5:10'
 };
 
-const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export default function ApplyLeave() {
   const { user } = useAuth();
@@ -27,15 +30,29 @@ export default function ApplyLeave() {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [dayLectures, setDayLectures] = useState([]);
   const [myExistingLeaves, setMyExistingLeaves] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+  const [overrides, setOverrides] = useState([]);
   const [error, setError] = useState('');
+  const [holidayMsg, setHolidayMsg] = useState('');
 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchMyLeaves();
+      fetchAdminData();
     }
   }, [user]);
+
+  const fetchAdminData = async () => {
+    try {
+      const [h, o] = await Promise.all([getHolidays(), getSaturdayOverrides()]);
+      setHolidays(h);
+      setOverrides(o);
+    } catch (err) {
+      console.error('Failed to fetch admin data:', err);
+    }
+  };
 
   const fetchMyLeaves = async () => {
     try {
@@ -58,11 +75,31 @@ export default function ApplyLeave() {
     }
 
     const dateObj = new Date(selectedDate + 'T00:00:00');
-    const dayName = DAYS[dateObj.getDay()];
+    let dayName = DAYS[dateObj.getDay()];
+    
+    // Check for Public Holiday
+    const holiday = holidays.find(h => h.date === selectedDate);
+    if (holiday) {
+      setDayLectures([]);
+      setHolidayMsg(`Public Holiday: ${holiday.reason}`);
+      setError(`This day is a public holiday (${holiday.reason}). No leave application needed.`);
+      return;
+    } else {
+      setHolidayMsg('');
+    }
 
-    if (dayName === 'sunday') {
+    // Check for Saturday Override
+    const override = overrides.find(o => o.date === selectedDate);
+    if (override) {
+      dayName = override.followsDay;
+      setError(''); // Clear any Sunday error if it was Saturday
+    } else if (dayName === 'sunday') {
       setDayLectures([]);
       setError('Sunday is a holiday. Please select a working day.');
+      return;
+    } else if (dayName === 'saturday') {
+      setDayLectures([]);
+      setError('Saturday is a holiday unless configured by admin.');
       return;
     }
 
@@ -147,6 +184,12 @@ export default function ApplyLeave() {
         {error && <div className="alert alert-error" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <AlertCircle size={18} /> {error}
         </div>}
+
+        {holidayMsg && (
+          <div className="alert alert-success" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#059669' }}>
+            <Palmtree size={18} /> {holidayMsg}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
