@@ -11,7 +11,9 @@ import {
   AlertCircle, 
   AlertTriangle,
   User,
-  ShieldCheck
+  ShieldCheck,
+  BookOpen,
+  Download
 } from 'lucide-react';
 
 const MONTHS = [
@@ -21,6 +23,7 @@ const MONTHS = [
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const isRootAdmin = user?.email === 'admin1@global.edu';
   const [leaves, setLeaves] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [passwordReqs, setPasswordReqs] = useState([]);
@@ -75,7 +78,10 @@ export default function AdminDashboard() {
         applicantName: leave.applicant?.name || 'Unknown',
         coveredByName: lec.coveredBy?.name || 'No one',
         isCovered: lec.covered,
-        slotNum: lec.slot
+        slotNum: lec.slot,
+        type: leave.type,
+        reason: leave.reason,
+        documentProof: leave.documentProof
       });
     });
   });
@@ -175,7 +181,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Password Reset Requests Section */}
-      {passwordReqs.length > 0 && (
+      {isRootAdmin && passwordReqs.length > 0 && (
         <div className="card-flat animate-in stagger-2" style={{ padding: '0', background: 'transparent', boxShadow: 'none', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <span style={{ color: 'var(--accent-primary)', display: 'flex' }}><Key size={20} /></span> 
@@ -186,24 +192,29 @@ export default function AdminDashboard() {
               </span>
             )}
           </h2>
-          <div style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{ display: 'grid', gap: '1.25rem' }}>
             {passwordReqs.map(req => (
-              <div key={req._id} className="card-flat" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--border-color)', background: 'var(--bg-panel)' }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-primary)' }}>{req.teacherName}</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{req.email}</div>
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
-                    Requested: {new Date(req.createdAt).toLocaleString()}
+              <div key={req._id} className="card-flat" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--border-color)', background: 'var(--bg-panel)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{req.teacherName}</div>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', padding: '0.2rem 0.5rem', borderRadius: '4px', background: req.role === 'admin' ? 'rgba(30, 41, 59, 0.1)' : 'rgba(216, 124, 36, 0.1)', color: req.role === 'admin' ? '#1e293b' : 'var(--accent-primary)', fontWeight: 800 }}>
+                      {req.role || 'faculty'}
+                    </span>
+                  </div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{req.email}</div>
+                  <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Clock size={12} /> Requested: {new Date(req.createdAt).toLocaleString()}
                   </div>
                 </div>
-                <div>
+                <div style={{ paddingLeft: '1.5rem' }}>
                   {req.status === 'pending' ? (
-                    <button className="btn btn-primary btn-sm" onClick={() => handleApprovePassword(req._id)} style={{ padding: '0.4rem 1.25rem' }}>
-                      Allow Reset
+                    <button className="btn btn-primary btn-sm" onClick={() => handleApprovePassword(req._id)} style={{ padding: '0.5rem 1.5rem', fontWeight: 700, borderRadius: '8px' }}>
+                      Approve Request
                     </button>
                   ) : (
-                    <span style={{ color: '#059669', background: 'rgba(16, 185, 129, 0.1)', padding: '0.4rem 0.8rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 600 }}>
-                      Approved
+                    <span style={{ color: '#059669', background: 'rgba(16, 185, 129, 0.15)', padding: '0.5rem 1rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                      Reset Enabled
                     </span>
                   )}
                 </div>
@@ -239,7 +250,41 @@ export default function AdminDashboard() {
                       )}
                     </div>
                     <div style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-primary)', flex: 1, lineHeight: 1.5 }}>
-                      <span style={{ fontWeight: 700 }}>{item.applicantName}</span> on (leave), <span style={{ fontWeight: 700 }}>{item.coveredByName}</span> {item.isCovered ? 'covered' : 'did not cover'} that lecture, with lecture number <strong style={{ color: 'var(--accent-primary)' }}>S{item.slotNum}</strong> of the day, with date <strong>{item.date}</strong>.
+                      <div>
+                        <span style={{ fontWeight: 700 }}>{item.applicantName}</span> on ({item.type ? item.type : 'leave'}), <span style={{ fontWeight: 700 }}>{item.coveredByName}</span> {item.isCovered ? 'covered' : 'did not cover'} that lecture, with lecture number <strong style={{ color: 'var(--accent-primary)' }}>S{item.slotNum}</strong> of the day, with date <strong>{item.date}</strong>.
+                      </div>
+                      {(item.reason || item.documentProof) && (
+                        <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.4)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                          {item.reason && <div style={{ color: 'var(--text-secondary)' }}><strong>Reason:</strong> {item.reason}</div>}
+                          {item.documentProof && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.4rem' }}>
+                              <div style={{ color: 'var(--accent-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <BookOpen size={14} /> 
+                                {item.documentProof.name || (typeof item.documentProof === 'string' ? item.documentProof : 'Document')}
+                                {item.documentProof.data && (
+                                  <a 
+                                    href={item.documentProof.data} 
+                                    download={item.documentProof.name || 'proof'} 
+                                    className="btn btn-primary"
+                                    style={{ 
+                                      padding: '0.2rem 0.6rem', 
+                                      fontSize: '0.75rem', 
+                                      borderRadius: '6px', 
+                                      marginLeft: '0.5rem',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.3rem',
+                                      textDecoration: 'none'
+                                    }}
+                                  >
+                                    <Download size={12} /> Download
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

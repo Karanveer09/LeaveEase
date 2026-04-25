@@ -152,22 +152,48 @@ export default function ManageHolidays() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {holidays.map(h => (
-                <div key={h._id} className="teacher-card" style={{ padding: '1rem' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{h.reason}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{formatDate(h.date)}</div>
-                  </div>
-                  <button 
-                    className="btn btn-ghost btn-sm" 
-                    style={{ color: '#ef4444' }}
-                    onClick={() => handleDelete(h._id)}
-                    title="Remove Holiday"
+              {holidays.map(h => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const holidayDate = new Date(h.date);
+                const isPast = holidayDate < today;
+
+                return (
+                  <div 
+                    key={h._id} 
+                    className="teacher-card" 
+                    style={{ 
+                      padding: '1rem',
+                      opacity: isPast ? 0.6 : 1,
+                      filter: isPast ? 'grayscale(1)' : 'none',
+                      background: isPast ? 'rgba(0,0,0,0.02)' : 'white',
+                      transition: 'all 0.3s ease'
+                    }}
                   >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ fontWeight: 700, fontSize: '1rem', color: isPast ? 'var(--text-muted)' : 'var(--text-primary)' }}>
+                          {h.reason}
+                        </div>
+                        {isPast && (
+                          <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '4px', background: '#e2e8f0', color: '#64748b', fontWeight: 600 }}>
+                            PASSED
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{formatDate(h.date)}</div>
+                    </div>
+                    <button 
+                      className="btn btn-ghost btn-sm" 
+                      style={{ color: '#ef4444' }}
+                      onClick={() => handleDelete(h._id)}
+                      title="Remove Holiday"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

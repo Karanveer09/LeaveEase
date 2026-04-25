@@ -90,7 +90,7 @@ const sampleTeachers = rawFaculty.map(f => {
 
   return {
     name: `${f.initials} (${f.id})`,
-    email: `${f.id.toLowerCase()}@college.edu`,
+    email: `${f.id.toLowerCase()}@global.edu`,
     password: 'password123',
     department: 'Computer Science',
     role: 'teacher',
@@ -101,7 +101,7 @@ const sampleTeachers = rawFaculty.map(f => {
 
 const adminUser = {
   name: 'Dr. Admin',
-  email: 'admin@college.edu',
+  email: 'admin1@global.edu',
   password: 'admin123',
   department: 'Computer Science',
   role: 'admin',
@@ -140,9 +140,9 @@ export const seedDatabase = async () => {
 
       // Seed 3 admins
       const admins = [
-        { name: 'Admin 1', email: 'admin1@college.edu', password: 'admin123' },
-        { name: 'Admin 2', email: 'admin2@college.edu', password: 'admin123' },
-        { name: 'Admin 3', email: 'admin3@college.edu', password: 'admin123' },
+        { name: 'Admin 1', email: 'admin1@global.edu', password: 'admin123' },
+        { name: 'Admin 2', email: 'admin2@global.edu', password: 'admin123' },
+        { name: 'Admin 3', email: 'admin3@global.edu', password: 'admin123' },
       ];
 
       for (const a of admins) {
@@ -196,33 +196,51 @@ export const seedDatabase = async () => {
 
       let updatedCount = 0;
 
-      const updatedUsers = allUsers.map(u => {
+      const nonAdminUsers = allUsers.filter(u => u.role !== 'admin').map(u => {
         let changed = false;
         let newName = u.name;
+        let newEmail = u.email;
         
-        // Exact match or cleanup for T06, T07, T12
-        if (u.email === 't06@college.edu' && !newName.includes('SH (T06)')) { newName = 'SH (T06)'; changed = true; }
-        if (u.email === 't07@college.edu' && !newName.includes('KK (T07)')) { newName = 'KK (T07)'; changed = true; }
-        if (u.email === 't12@college.edu' && !newName.includes('NS (T12)')) { newName = 'NS (T12)'; changed = true; }
+        if (u.email === 't06@global.edu') {
+          if (!newName.includes('SH (T06)')) { newName = 'SH (T06)'; changed = true; }
+        }
+        if (u.email === 't07@global.edu') {
+          if (!newName.includes('KK (T07)')) { newName = 'KK (T07)'; changed = true; }
+        }
+        if (u.email === 't12@global.edu') {
+          if (!newName.includes('NS (T12)')) { newName = 'NS (T12)'; changed = true; }
+        }
         
         // Final cleanup for any KKK/KKKK accidentally created
         if (newName.includes('KKK')) { 
-          if (u.email === 't07@college.edu') newName = 'KK (T07)';
+          if (u.email === 't07@global.edu') newName = 'KK (T07)';
           changed = true; 
+        }
+
+        // Migrate ALL faculty/users to @global.edu (Catch-all for any stragglers)
+        if (u.email && u.email.endsWith('@college.edu')) {
+          newEmail = u.email.replace('@college.edu', '@global.edu');
+          changed = true;
         }
 
         if (changed) {
           updatedCount++;
-          return { ...u, name: newName };
+          return { ...u, name: newName, email: newEmail };
         }
         return u;
       });
 
-
-      if (updatedCount > 0) {
-        console.log(`Migrated initials for ${updatedCount} users.`);
-        usersCollection.setAll(updatedUsers);
+      let existingAdmins = allUsers.filter(u => u.role === 'admin' && u.email.endsWith('@global.edu'));
+      if (existingAdmins.length === 0) {
+        existingAdmins = [
+          { _id: 'admin1_' + Date.now().toString(), name: 'Admin 1', email: 'admin1@global.edu', password: 'admin123', department: 'Administration', role: 'admin', profileSetup: true, timetable: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] }, createdAt: new Date().toISOString() },
+          { _id: 'admin2_' + Date.now().toString(), name: 'Admin 2', email: 'admin2@global.edu', password: 'admin123', department: 'Administration', role: 'admin', profileSetup: true, timetable: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] }, createdAt: new Date().toISOString() },
+          { _id: 'admin3_' + Date.now().toString(), name: 'Admin 3', email: 'admin3@global.edu', password: 'admin123', department: 'Administration', role: 'admin', profileSetup: true, timetable: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] }, createdAt: new Date().toISOString() }
+        ];
       }
+
+      console.log(`Migrated initials for ${updatedCount} users. Existing admins preserved.`);
+      usersCollection.setAll([...nonAdminUsers, ...existingAdmins]);
 
       // Auto-login logic removed to ensure security
     }

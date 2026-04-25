@@ -12,7 +12,8 @@ import {
   AlertCircle,
   BookOpen,
   Palmtree,
-  CalendarDays
+  CalendarDays,
+  UploadCloud
 } from 'lucide-react';
 
 const SLOT_TIMES = {
@@ -26,7 +27,9 @@ export default function ApplyLeave() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [date, setDate] = useState('');
+  const [type, setType] = useState('Casual');
   const [reason, setReason] = useState('');
+  const [documentProof, setDocumentProof] = useState(null);
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [dayLectures, setDayLectures] = useState([]);
   const [myExistingLeaves, setMyExistingLeaves] = useState([]);
@@ -36,6 +39,31 @@ export default function ApplyLeave() {
   const [holidayMsg, setHolidayMsg] = useState('');
 
   const [loading, setLoading] = useState(false);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setDocumentProof(null);
+      return;
+    }
+    
+    // Check file size limit to prevent localStorage overflow (Max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Proof document is too large. Please upload a file smaller than 2MB.');
+      // Auto-clear error
+      setTimeout(() => setError(''), 5000);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setDocumentProof({
+        name: file.name,
+        data: event.target.result
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (user) {
@@ -159,6 +187,9 @@ export default function ApplyLeave() {
 
       const res = await createLeave(user._id, {
         date,
+        type,
+        isSubstitutionOnly: type === 'On Duty Official Work',
+        documentProof,
         reason,
         lecturesOnLeave
       });
@@ -208,18 +239,80 @@ export default function ApplyLeave() {
           </div>
 
           <div className="form-group">
+            <label className="form-label" htmlFor="leave-type" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <FileText size={16} /> Category
+            </label>
+            <select id="leave-type" className="form-select" value={type} onChange={e => setType(e.target.value)}>
+              <option value="Casual">Casual Leave</option>
+              <option value="Medical">Medical Leave</option>
+              <option value="On Duty Official Work">On Duty Official Work (Substitution Only)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
             <label className="form-label" htmlFor="leave-reason" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <FileText size={16} /> Reason for Leave
+              <FileText size={16} /> Reason / Details
             </label>
             <textarea
               id="leave-reason"
               className="form-textarea"
-              placeholder="e.g. Medical emergency, Family function..."
+              placeholder="Provide specific details regarding your absence..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               required
             />
           </div>
+
+          {type === 'On Duty Official Work' && (
+            <div className="form-group animate-in">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', borderBottom: 'none' }}>
+                <BookOpen size={16} /> Official Duty Proof (Optional)
+              </label>
+              <div 
+                style={{ 
+                  padding: '2rem', 
+                  background: documentProof ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-input)', 
+                  borderRadius: 'var(--radius-lg)', 
+                  border: `2px dashed ${documentProof ? '#059669' : 'var(--accent-primary)'}`, 
+                  textAlign: 'center', 
+                  cursor: 'pointer', 
+                  position: 'relative', 
+                  transition: 'all 0.3s ease' 
+                }}
+                onMouseEnter={e => { if(!documentProof) { e.currentTarget.style.background = 'rgba(216,124,36,0.05)'; e.currentTarget.style.borderColor = 'var(--accent-secondary)'} }}
+                onMouseLeave={e => { if(!documentProof) { e.currentTarget.style.background = 'var(--bg-input)'; e.currentTarget.style.borderColor = 'var(--accent-primary)'} }}
+              >
+                <input 
+                  id="proof-upload"
+                  type="file" 
+                  onChange={handleFileUpload} 
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                />
+                
+                {documentProof ? (
+                  <>
+                    <CheckCircle2 size={36} style={{ color: '#059669', marginBottom: '0.75rem', margin: '0 auto' }} />
+                    <div style={{ fontWeight: 700, color: '#059669', fontSize: '1.1rem' }}>
+                      {documentProof.name ? documentProof.name : documentProof}
+                    </div>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', opacity: 0.8 }}>
+                      Click or drag to replace document. ({(documentProof.data ? (documentProof.data.length / 1024).toFixed(0) : 0)} KB)
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud size={36} style={{ color: 'var(--accent-primary)', marginBottom: '0.75rem', margin: '0 auto' }} />
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.1rem' }}>
+                      Click to upload request document
+                    </div>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      Supports PDF, DOCX, or Image formats.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {date && dayLectures.length > 0 && (
             <div className="form-group" style={{ marginTop: '2rem' }}>

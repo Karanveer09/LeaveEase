@@ -12,7 +12,8 @@ import {
   User, 
   XCircle, 
   AlertCircle,
-  CheckCircle2 
+  CheckCircle2,
+  Download
 } from 'lucide-react';
 
 const SLOT_TIMES = {
@@ -205,12 +206,32 @@ export default function LeaveDetail() {
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <Calendar size={24} style={{ color: 'var(--accent-primary)' }} /> {formatDate(leave.date)}
+              {leave.type && (
+                <span className={`badge ${leave.isSubstitutionOnly ? 'badge-accepted' : 'badge-pending'}`} style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', marginLeft: '0.5rem', fontWeight: 700 }}>
+                  {leave.type}
+                </span>
+              )}
             </h2>
             <div style={{ background: 'var(--bg-card)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', maxWidth: '600px' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Reason for leave:</strong>
+              <strong style={{ color: 'var(--text-primary)' }}>Reason / Details:</strong>
               <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: 1.6 }}>
                 {leave.reason}
               </p>
+              {leave.documentProof && (
+                <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'rgba(216, 124, 36, 0.05)', border: '1px solid rgba(216, 124, 36, 0.2)', borderRadius: 'var(--radius-md)', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <BookOpen size={14} style={{ color: 'var(--accent-primary)' }} /> 
+                  Proof: <strong>{leave.documentProof.name || (typeof leave.documentProof === 'string' ? leave.documentProof : 'Document')}</strong>
+                  {leave.documentProof.data && (
+                    <a 
+                      href={leave.documentProof.data} 
+                      download={leave.documentProof.name || 'proof'} 
+                      style={{ color: 'var(--accent-primary)', textDecoration: 'underline', marginLeft: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                    >
+                      <Download size={14} /> Download
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>

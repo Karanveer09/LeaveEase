@@ -3,6 +3,8 @@ import { localCollection } from '../utils/localDb';
 const holidaysCollection = localCollection('holidays');
 const overridesCollection = localCollection('timetableOverrides');
 const usersCollection = localCollection('users');
+const leavesCollection = localCollection('leaves');
+const substitutionsCollection = localCollection('substitutionRequests');
 
 const checkAdmin = (adminId) => {
   const admin = usersCollection.getById(adminId);
@@ -14,6 +16,27 @@ const checkAdmin = (adminId) => {
 // ====== Holidays ======
 export const addHoliday = async (adminId, holidayData) => {
   checkAdmin(adminId);
+  
+  const date = holidayData.date;
+  
+  // 1. Cancel all active leaves on this date
+  const leavesOnDate = leavesCollection.getAll().filter(l => l.date === date && l.status !== 'cancelled');
+  for (const leave of leavesOnDate) {
+    leavesCollection.update(leave._id, {
+      status: 'cancelled',
+      reason: (leave.reason ? leave.reason + " | " : "") + `Cancelled: Date declared as holiday (${holidayData.name})`
+    });
+  }
+
+  // 2. Cancel all substitution requests on this date
+  const subsOnDate = substitutionsCollection.getAll().filter(s => s.date === date && s.status !== 'cancelled' && s.status !== 'rejected');
+  for (const sub of subsOnDate) {
+    substitutionsCollection.update(sub._id, {
+      status: 'cancelled',
+      rejectionReason: `Cancelled: Date declared as holiday (${holidayData.name})`
+    });
+  }
+
   return holidaysCollection.add({
     ...holidayData,
     createdAt: new Date().toISOString()

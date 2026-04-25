@@ -15,7 +15,8 @@ import {
   Power,
   Sparkles,
   Activity,
-  Palmtree
+  Palmtree,
+  CalendarCog
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -26,6 +27,7 @@ export default function Sidebar() {
 
   if (!user) return null;
 
+  const admin1 = user.email === 'admin1@global.edu';
   const initials = user.name.split('(')[0].trim();
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
@@ -33,7 +35,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate(isAdmin ? '/admin/login' : '/login');
     setShowLogoutModal(false);
   };
 
@@ -108,7 +110,11 @@ export default function Sidebar() {
               <div className="user-name">{user.name}</div>
               <div className="user-role-badge">
                 {isAdmin ? (
-                  <><ShieldCheck size={12} /> Admin</>
+                  admin1 ? (
+                    <><ShieldCheck size={12} /> Admin</>
+                  ) : (
+                    <><CalendarCog size={12} /> Time Table Incharge</>
+                  )
                 ) : (
                   <><GraduationCap size={12} /> Teacher</>
                 )}

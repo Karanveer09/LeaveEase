@@ -34,6 +34,7 @@ export default function FacultyLogin() {
   const [forgotStep, setForgotStep] = useState('email'); // email, pending, new_password
   const [forgotEmail, setForgotEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [forgotMsg, setForgotMsg] = useState({ type: '', text: '' });
   const [forgotLoading, setForgotLoading] = useState(false);
 
@@ -95,6 +96,8 @@ export default function FacultyLogin() {
         }
       } else if (forgotStep === 'new_password') {
         if (!newPassword || newPassword.length < 6) throw new Error("Password must be at least 6 characters.");
+        if (newPassword !== confirmPassword) throw new Error("Passwords do not match.");
+        
         await submitNewPassword(forgotEmail, newPassword);
         setForgotMsg({ type: 'success', text: "Password reset correctly! You can now log in."});
         setTimeout(() => {
@@ -102,6 +105,7 @@ export default function FacultyLogin() {
           setForgotStep('email');
           setForgotEmail('');
           setNewPassword('');
+          setConfirmPassword('');
           setForgotMsg({ type: '', text: '' });
         }, 2500);
       }
@@ -116,7 +120,7 @@ export default function FacultyLogin() {
     <div className="auth-layout">
       {/* Visual Sidebar */}
       <div className="auth-sidebar" style={{ padding: '3rem', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ position: 'absolute', top: '3rem', left: '3rem', display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 2 }}>
           <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)', fontSize: '1.2rem', fontWeight: 800, boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
             <Sparkles size={20} fill="currentColor" />
           </div>
@@ -168,7 +172,7 @@ export default function FacultyLogin() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">Work Email</label>
-              <input type="email" className="form-input" placeholder="e.g. t01@college.edu"
+              <input type="email" className="form-input" placeholder="e.g. t01@global.edu"
                 value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="form-group">
@@ -192,7 +196,7 @@ export default function FacultyLogin() {
               <Key size={14} /> Demo Faculty Account
             </p>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Email: t01@college.edu</span>
+              <span style={{ color: 'var(--text-muted)' }}>Email: t01@global.edu</span>
               <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>password123</span>
             </div>
           </div>
@@ -217,14 +221,20 @@ export default function FacultyLogin() {
               {forgotStep !== 'new_password' && (
                 <div className="form-group">
                   <label className="form-label">Work Email</label>
-                  <input type="email" className="form-input" placeholder="e.g. t01@college.edu" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required disabled={forgotStep === 'pending'} />
+                  <input type="email" className="form-input" placeholder="e.g. t01@global.edu" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required disabled={forgotStep === 'pending'} />
                 </div>
               )}
               {forgotStep === 'new_password' && (
-                <div className="form-group">
-                  <label className="form-label">New Password</label>
-                  <input type="password" className="form-input" placeholder="Min 6 characters" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
-                </div>
+                <>
+                  <div className="form-group">
+                    <label className="form-label">New Password</label>
+                    <input type="password" className="form-input" placeholder="Min 6 characters" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Confirm New Password</label>
+                    <input type="password" className="form-input" placeholder="Repeat password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+                  </div>
+                </>
               )}
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>

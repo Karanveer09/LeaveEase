@@ -1,14 +1,14 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
-import { 
-  Sparkles, 
-  BookOpen, 
-  Shield, 
-  Zap, 
-  ShieldCheck, 
-  Calendar, 
-  ChevronDown, 
+import {
+  Sparkles,
+  BookOpen,
+  Shield,
+  Zap,
+  ShieldCheck,
+  Calendar,
+  ChevronDown,
   ArrowRight,
   GraduationCap
 } from 'lucide-react';
@@ -44,13 +44,13 @@ export default function LandingPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', width: '100%', background: 'var(--bg-body)', position: 'relative', overflowX: 'hidden' }}>
-      
+
       {/* Decorative Background Elements */}
       <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(216, 124, 36, 0.08) 0%, rgba(216,124,36,0) 70%)', borderRadius: '50%', zIndex: 0, pointerEvents: 'none' }}></div>
       <div style={{ position: 'absolute', top: '40%', right: '-10%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(232, 160, 75, 0.05) 0%, rgba(232,160,75,0) 70%)', borderRadius: '50%', zIndex: 0, pointerEvents: 'none' }}></div>
 
       {/* Navbar */}
-      <nav style={{ 
+      <nav style={{
         position: 'fixed', top: 0, width: '100%', zIndex: 50, transition: 'all 0.3s ease',
         background: scrolled ? 'rgba(255,255,255,0.9)' : 'transparent',
         backdropFilter: scrolled ? 'blur(10px)' : 'none',
@@ -58,7 +58,7 @@ export default function LandingPage() {
         borderBottom: scrolled ? '1px solid rgba(216,124,36,0.1)' : '1px solid transparent'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: scrolled ? '1rem 2rem' : '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.3s ease' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-primary)', cursor: 'pointer' }} onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-primary)', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div style={{ width: '36px', height: '36px', background: 'var(--gradient-primary)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(216,124,36,0.3)' }}>
               <Sparkles size={18} fill="currentColor" />
             </div>
@@ -85,7 +85,7 @@ export default function LandingPage() {
             Version 2.0 Now Live
           </div>
           <h1 style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)', fontWeight: 800, lineHeight: 1.1, marginBottom: '1.5rem', color: 'var(--text-primary)', letterSpacing: '-1px' }}>
-            Schedule management <br/>
+            Schedule management <br />
             <span style={{ background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>perfected.</span>
           </h1>
           <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', marginBottom: '3.5rem', maxWidth: '600px', margin: '0 auto 3.5rem auto', lineHeight: 1.6 }}>
@@ -95,12 +95,12 @@ export default function LandingPage() {
 
         {/* Portal Entry Cards */}
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', padding: '0 2rem', width: '100%', maxWidth: '1000px', marginBottom: '6rem' }} className="animate-in stagger-2">
-          
+
           {/* Faculty Card */}
-          <div 
+          <div
             onClick={() => navigate('/login')}
-            style={{ 
-              flex: '1 1 350px', maxWidth: '450px', background: 'white', borderRadius: '24px', padding: '3rem 2.5rem', 
+            style={{
+              flex: '1 1 350px', maxWidth: '450px', background: 'white', borderRadius: '24px', padding: '3rem 2.5rem',
               cursor: 'pointer', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden',
               transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
               transform: 'translateY(0)'
@@ -127,10 +127,10 @@ export default function LandingPage() {
           </div>
 
           {/* Admin Card */}
-          <div 
+          <div
             onClick={() => navigate('/admin/login')}
-            style={{ 
-              flex: '1 1 350px', maxWidth: '450px', background: 'var(--text-primary)', borderRadius: '24px', padding: '3rem 2.5rem', 
+            style={{
+              flex: '1 1 350px', maxWidth: '450px', background: 'var(--text-primary)', borderRadius: '24px', padding: '3rem 2.5rem',
               cursor: 'pointer', position: 'relative', overflow: 'hidden',
               transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
               transform: 'translateY(0)'
@@ -146,7 +146,7 @@ export default function LandingPage() {
           >
             {/* Subtle mesh background on dark card */}
             <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(216,124,36,0.2) 0%, rgba(216,124,36,0) 70%)', opacity: 0.5 }}></div>
-            
+
             <div style={{ width: '60px', height: '60px', background: 'rgba(255,255,255,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', marginBottom: '1.5rem', color: 'white', position: 'relative', zIndex: 2 }}>
               <Shield size={32} />
             </div>
@@ -193,11 +193,11 @@ export default function LandingPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {faqs.map((faq, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                style={{ 
-                  background: 'white', borderRadius: '16px', padding: '1.5rem 2rem', cursor: 'pointer', 
+                style={{
+                  background: 'white', borderRadius: '16px', padding: '1.5rem 2rem', cursor: 'pointer',
                   border: `1px solid ${activeFaq === i ? 'var(--accent-primary)' : 'var(--border-color)'}`,
                   boxShadow: activeFaq === i ? '0 10px 20px rgba(216,124,36,0.05)' : 'none',
                   transition: 'all 0.3s ease'
@@ -209,10 +209,10 @@ export default function LandingPage() {
                     <ChevronDown size={20} />
                   </div>
                 </div>
-                <div style={{ 
-                  maxHeight: activeFaq === i ? '200px' : '0', overflow: 'hidden', 
+                <div style={{
+                  maxHeight: activeFaq === i ? '200px' : '0', overflow: 'hidden',
                   transition: 'max-height 0.3s ease, margin-top 0.3s ease',
-                  marginTop: activeFaq === i ? '1rem' : '0' 
+                  marginTop: activeFaq === i ? '1rem' : '0'
                 }}>
                   <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{faq.a}</p>
                 </div>
@@ -233,12 +233,12 @@ export default function LandingPage() {
             Built specifically to solve real university scheduling challenges.
           </p>
           <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '3rem' }}>
-            <span style={{ color: 'rgba(255,255,255,0.8)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={e=>e.target.style.color='white'} onMouseLeave={e=>e.target.style.color='rgba(255,255,255,0.8)'}>Privacy Policy</span>
-            <span style={{ color: 'rgba(255,255,255,0.8)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={e=>e.target.style.color='white'} onMouseLeave={e=>e.target.style.color='rgba(255,255,255,0.8)'}>Terms of Service</span>
-            <span style={{ color: 'rgba(255,255,255,0.8)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={e=>e.target.style.color='white'} onMouseLeave={e=>e.target.style.color='rgba(255,255,255,0.8)'}>Contact Admin</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = 'white'} onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.8)'}>Privacy Policy</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = 'white'} onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.8)'}>Terms of Service</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = 'white'} onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.8)'}>Contact Admin</span>
           </div>
           <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', marginBottom: '2rem' }}></div>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>&copy; {new Date().getFullYear()} LeaveFlow Management Systems. Design by Deepmind AI.</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>&copy; {new Date().getFullYear()} LeaveFlow Management Systems. Design by Kavvy09.</p>
         </div>
       </footer>
     </div>

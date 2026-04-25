@@ -534,7 +534,10 @@ tr:hover td {
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  max-height: 100vh;
   z-index: 10;
   border-radius: 0 24px 24px 0;
 }
@@ -1318,23 +1321,119 @@ tr:hover td {
   font-weight: 600;
 }
 
-/* Admin Timetable Responsive */
+/* ===== Comprehensive Responsive Design ===== */
+@media (max-width: 900px) {
+  /* Auth Pages */
+  .auth-layout {
+    flex-direction: column;
+  }
+  .auth-sidebar {
+    padding: var(--space-xl) !important;
+    min-height: auto;
+  }
+  .auth-sidebar > div:first-child {
+    position: static !important;
+    margin-bottom: var(--space-lg) !important;
+  }
+  .auth-sidebar h1 {
+    font-size: 2.2rem !important;
+    margin-bottom: var(--space-sm) !important;
+  }
+  .auth-sidebar p {
+    font-size: 1rem !important;
+    margin-bottom: var(--space-md) !important;
+  }
+  .auth-form-container {
+    padding: var(--space-xl) var(--space-md);
+  }
+  
+  /* Core layout padding */
+  .page-container {
+    padding: var(--space-lg) var(--space-md);
+  }
+  .page-title {
+    font-size: 2rem;
+  }
+}
+
 @media (max-width: 768px) {
-  .admin-timetable-grid {
-    grid-template-columns: 50px repeat(4, 1fr) 30px repeat(4, 1fr);
-    font-size: 0.7rem;
+  /* General App Layout */
+  .app-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .sidebar-logo {
+    margin-bottom: 0;
+  }
+  .nav-links {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+  }
+  .nav-link span,
+  .sidebar-user {
+    display: none;
+  }
+  .nav-link {
+    padding: 0.5rem;
   }
 
+  /* Cards and UI Elements */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-md);
+  }
+  .stat-value {
+    font-size: 2rem;
+  }
+  .card, .glass-card, .card-flat {
+    padding: var(--space-md);
+  }
+  
+  /* Admin Timetable Scrolling */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-timetable-grid {
+    min-width: 650px; /* force scroll if too small to read */
+    grid-template-columns: 60px repeat(4, 1fr) 40px repeat(4, 1fr);
+    font-size: 0.7rem;
+  }
   .tt-cell {
     padding: 0.4rem 0.2rem;
     min-height: 40px;
   }
-
   .tt-subject {
     font-size: 0.65rem;
   }
 
   .signout-btn .signout-text {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.6rem;
+  }
+  .nav-links {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .form-input, .form-select, .form-textarea, .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
   }
 }

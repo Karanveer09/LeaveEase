@@ -31,6 +31,25 @@ export const getCurrentUserProfile = async (uid) => {
   return user || null;
 };
 
+// Link Admin to a Teacher Profile
+export const linkAdminToTeacher = async (adminId, teacherId) => {
+  const admin = usersCollection.getById(adminId);
+  if (!admin || admin.role !== 'admin') {
+    throw new Error('Unauthorized');
+  }
+  return usersCollection.update(adminId, { linkedTeacherId: teacherId });
+};
+
+// Unlink Admin from Teacher Profile
+export const unlinkAdminFromTeacher = async (adminId) => {
+  const admin = usersCollection.getById(adminId);
+  if (!admin || admin.role !== 'admin') {
+    throw new Error('Unauthorized');
+  }
+  // We can either set it to null or remove the key. Setting to null is fine.
+  return usersCollection.update(adminId, { linkedTeacherId: null });
+};
+
 // ====== Admin Functions ======
 
 // Create Teacher Account (Admin only)
@@ -137,13 +156,19 @@ export const requestPasswordReset = async (email) => {
   const user = users.find(u => u.email === email);
   if (!user) throw new Error("No account found with this email.");
   
+  // Special case for Admin 1 -> Developer
+  if (email === 'admin1@global.edu') {
+    return { developerMode: true, message: "Password change request has been sent, developer will soon contact with you." };
+  }
+  
   const existing = passReqsCollection.getAll().find(r => r.email === email);
   if (existing) return existing;
   
   return passReqsCollection.add({ 
     email, 
-    status: user.role === 'admin' ? 'approved' : 'pending', 
+    status: 'pending', 
     teacherName: user.name,
+    role: user.role,
     createdAt: new Date().toISOString() 
   });
 };
@@ -156,6 +181,10 @@ export const checkPasswordRequestStatus = async (email) => {
 export const submitNewPassword = async (email, newPassword) => {
   const req = passReqsCollection.getAll().find(r => r.email === email && r.status === 'approved');
   if (!req) throw new Error("No approved password reset request found.");
+
+  if (email === 'admin1@global.edu') {
+    throw new Error("Security Restriction: Admin 1 password can only be changed by the developer.");
+  }
   
   const users = usersCollection.getAll();
   const user = users.find(u => u.email === email);

@@ -7,11 +7,14 @@ import {
   CheckCircle2, 
   AlertCircle,
   Key,
-  User
+  User,
+  CalendarCog,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function ManageAdmins() {
   const { user: currentUser } = useAuth();
+  const isRootAdmin = currentUser?.email === 'admin1@global.edu';
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -76,6 +79,12 @@ export default function ManageAdmins() {
         <p className="page-subtitle">Oversee admin accounts and handle credential recovery</p>
       </div>
 
+      {!isRootAdmin && (
+        <div className="alert alert-error" style={{ marginBottom: '2rem' }}>
+          <AlertCircle size={18} /> You do not have permission to manage administration credentials.
+        </div>
+      )}
+
       {error && <div className="alert alert-error" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <AlertCircle size={18} /> {error}
       </div>}
@@ -94,15 +103,17 @@ export default function ManageAdmins() {
         {admins.map((admin, i) => (
           <div key={admin._id} className="card-flat animate-in" style={{ animationDelay: `${i * 0.05}s`, border: admin._id === currentUser._id ? '1px solid var(--accent-primary)' : '' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div className="teacher-avatar" style={{ width: '48px', height: '48px', fontSize: '1rem', background: '#f1f5f9', color: '#475569' }}>
-                <Shield size={24} />
+              <div className="teacher-avatar" style={{ width: '48px', height: '48px', fontSize: '1rem', background: '#f1f5f9', color: 'var(--accent-primary)' }}>
+                {admin.email === 'admin1@global.edu' ? <ShieldCheck size={24} /> : <CalendarCog size={24} />}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{admin.name}</span>
                   {admin._id === currentUser._id && <span className="badge badge-accepted" style={{ fontSize: '0.7rem' }}>You</span>}
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Administrator</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  {admin.email === 'admin1@global.edu' ? 'Administrator' : 'Time Table Incharge'}
+                </div>
               </div>
             </div>
 
@@ -113,26 +124,30 @@ export default function ManageAdmins() {
               </div>
             </div>
 
-            {resettingId === admin._id ? (
-              <div className="animate-in" style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                <label className="form-label" style={{ fontSize: '0.8rem' }}>New Secure Password</label>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <input type="text" className="form-input" style={{ fontSize: '0.9rem' }} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
-                  <button className="btn btn-outline btn-sm" onClick={generatePassword} title="Generate">
-                    <RefreshCw size={14} />
+            <div>
+              {isRootAdmin && (
+                resettingId === admin._id ? (
+                  <div className="animate-in" style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>New Secure Password</label>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <input type="text" className="form-input" style={{ fontSize: '0.9rem' }} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
+                      <button className="btn btn-outline btn-sm" onClick={generatePassword} title="Generate">
+                        <RefreshCw size={14} />
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="btn btn-success btn-sm" style={{ flex: 1 }} onClick={() => handleResetPassword(admin._id)}>Save</button>
+                      <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => { setResettingId(null); setNewPassword(''); }}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button className="btn btn-outline btn-sm btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    onClick={() => setResettingId(admin._id)}>
+                    <Key size={14} /> Reset Password
                   </button>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-success btn-sm" style={{ flex: 1 }} onClick={() => handleResetPassword(admin._id)}>Save</button>
-                  <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => { setResettingId(null); setNewPassword(''); }}>Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <button className="btn btn-outline btn-sm btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                onClick={() => setResettingId(admin._id)}>
-                <Key size={14} /> Reset Password
-              </button>
-            )}
+                )
+              )}
+            </div>
           </div>
         ))}
       </div>

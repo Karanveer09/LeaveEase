@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getMyLeaves } from '../services/leaveService';
-import { FileText, PlusCircle, ArrowRight } from 'lucide-react';
+import { FileText, PlusCircle, ArrowRight, Paperclip } from 'lucide-react';
 
 export default function MyLeaves() {
   const { user } = useAuth();
@@ -69,6 +69,7 @@ export default function MyLeaves() {
             <thead>
               <tr>
                 <th>Date</th>
+                <th>Type</th>
                 <th>Reason</th>
                 <th>Lectures</th>
                 <th>Coverage</th>
@@ -84,9 +85,21 @@ export default function MyLeaves() {
                 return (
                   <tr key={leave._id}>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{formatDate(leave.date)}</td>
+                    <td>
+                      {leave.type ? (
+                        <span className={`badge ${leave.isSubstitutionOnly ? 'badge-accepted' : 'badge-pending'}`} style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}>
+                          {leave.type}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Not specified</span>
+                      )}
+                    </td>
                     <td style={{ maxWidth: '250px' }}>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
-                        {leave.reason}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
+                        {leave.documentProof && <Paperclip size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} title="Proof attached" />}
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {leave.reason}
+                        </div>
                       </div>
                     </td>
                     <td>

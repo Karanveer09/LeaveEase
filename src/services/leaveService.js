@@ -7,7 +7,7 @@ const leavesCollection = localCollection('leaves');
 
 // Create leave application
 export const createLeave = async (applicantId, leaveData) => {
-  const { date, reason, lecturesOnLeave } = leaveData;
+  const { date, reason, lecturesOnLeave, type, isSubstitutionOnly, documentProof } = leaveData;
   
   // Prevent duplicate leave applications for the same LECTURE SLOTS on the same date
   const activeLeavesToday = leavesCollection.getAll().filter(l => 
@@ -43,16 +43,21 @@ export const createLeave = async (applicantId, leaveData) => {
       status: newStatus,
       // Update reason if it was empty or just append if desired? 
       // User didn't specify, I'll keep the original reason or combine them
-      reason: existingActiveLeave.reason + (reason ? ` | ${reason}` : '')
+      reason: existingActiveLeave.reason + (reason ? ` | ${reason}` : ''),
+      type: existingActiveLeave.type || type,
+      documentProof: existingActiveLeave.documentProof || documentProof,
+      isSubstitutionOnly: existingActiveLeave.isSubstitutionOnly || isSubstitutionOnly
     });
 
     return await getLeaveById(existingActiveLeave._id);
   }
 
   const savedLeave = leavesCollection.add({
-
     applicantId,
     date,
+    type,
+    isSubstitutionOnly,
+    documentProof,
     reason,
     lecturesOnLeave: lecturesOnLeave.map(l => ({ ...l, covered: false, coveredById: null, cancelled: false })),
     status: 'pending',

@@ -14,6 +14,7 @@ import {
 
 export default function ManageTeachers() {
   const { user } = useAuth();
+  const isRootAdmin = user?.email === 'admin1@global.edu';
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -140,12 +141,14 @@ export default function ManageTeachers() {
       )}
 
       {/* Action Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }} className="animate-in">
-        <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{teachers.length} teacher{teachers.length !== 1 ? 's' : ''} registered</span>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {showForm ? <><X size={18} /> Cancel</> : <><UserPlus size={18} /> Create Teacher Account</>}
-        </button>
-      </div>
+      {isRootAdmin && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }} className="animate-in">
+          <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{teachers.length} teacher{teachers.length !== 1 ? 's' : ''} registered</span>
+          <button className="btn btn-primary" onClick={() => setShowForm(!showForm)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {showForm ? <><X size={18} /> Cancel</> : <><UserPlus size={18} /> Create Teacher Account</>}
+          </button>
+        </div>
+      )}
 
       {/* Create Form */}
       {showForm && (
@@ -165,7 +168,7 @@ export default function ManageTeachers() {
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="t-email">Email Address</label>
-                <input id="t-email" type="email" className="form-input" placeholder="e.g. john@college.edu"
+                <input id="t-email" type="email" className="form-input" placeholder="e.g. john@global.edu"
                   value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
               </div>
               <div className="form-group">
@@ -208,17 +211,16 @@ export default function ManageTeachers() {
               <div style={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.9rem' }}>{teacher.email}</div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 {Object.values(teacher.timetable || {}).flat().length} lectures/week
               </div>
-              <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                {Object.values(teacher.timetable || {}).flat().length} lectures/week
-              </div>
-              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-danger)', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.5rem' }}
-                onClick={() => setDeleteModal(teacher)}>
-                <Trash2 size={14} /> Delete
-              </button>
+              {isRootAdmin && (
+                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-danger)', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.5rem' }}
+                  onClick={() => setDeleteModal(teacher)}>
+                  <Trash2 size={14} /> Delete
+                </button>
+              )}
             </div>
           </div>
         ))}
