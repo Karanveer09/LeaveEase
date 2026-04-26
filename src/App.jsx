@@ -19,6 +19,9 @@ import ManageTimetable from './pages/admin/ManageTimetable';
 import ManageHolidays from './pages/admin/ManageHolidays';
 import FacultyActivity from './pages/admin/FacultyActivity';
 import Profile from './pages/Profile';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Footer from './components/Footer';
 
 function SetupGuard({ children }) {
   const { needsSetup } = useAuth();
@@ -34,6 +37,8 @@ function AppContent() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<FacultyLogin />} />
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       
       {/* Profile Setup Route (teacher first login) */}
       <Route path="/setup" element={
@@ -59,6 +64,7 @@ function AppContent() {
                 <Route path="*" element={<AdminDashboard />} />
               </Routes>
             </main>
+            <Footer />
           </div>
         </AdminRoute>
       } />
@@ -80,6 +86,7 @@ function AppContent() {
                   <Route path="*" element={<Dashboard />} />
                 </Routes>
               </main>
+              <Footer />
             </div>
           </SetupGuard>
         </ProtectedRoute>
