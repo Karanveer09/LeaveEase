@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "_id": "fyktofejp",
+      "email": "test@example.com",
+      "name": "Test User",
+      "role": "faculty",
+      "profileComplete": false,
+      "createdAt": "2026-04-26T21:00:35.311Z"
+    }
+  ],
+  "leaves": [],
+  "substitutionRequests": [],
+  "holidays": [],
+  "timetableOverrides": []
+}

@@ -1,26 +1,65 @@
-import { localCollection } from '../utils/localDb';
+import { apiCall } from '../utils/api';
 import { getCurrentUserProfile } from './authService';
 import { cancelRequestsBySlot } from './substitutionService';
 
+const applyAcceptedCoverage = (leave, allRequests) => {
+  const leaveCopy = { ...leave };
+  const acceptedForLeave = allRequests.filter(
+    r => r.leaveId === leaveCopy._id && r.status === 'accepted'
+  );
 
-const leavesCollection = localCollection('leaves');
+  leaveCopy.lecturesOnLeave = (leaveCopy.lecturesOnLeave || []).map(lecture => {
+    if (lecture.cancelled) return lecture;
+    if (lecture.covered) return lecture;
+
+    const acceptedReq = acceptedForLeave.find(
+      r => Number(r.lectureSlot) === Number(lecture.slot)
+    );
+
+    if (acceptedReq) {
+      return {
+        ...lecture,
+        covered: true,
+        coveredById: acceptedReq.substituteTeacherId,
+      };
+    }
+
+    return lecture;
+  });
+
+  const activeLectures = leaveCopy.lecturesOnLeave.filter(l => !l.cancelled);
+  const coveredLectures = activeLectures.filter(l => l.covered).length;
+
+  if (activeLectures.length === 0) {
+    leaveCopy.status = 'cancelled';
+  } else if (coveredLectures === activeLectures.length) {
+    leaveCopy.status = 'fully_covered';
+  } else if (coveredLectures > 0) {
+    leaveCopy.status = 'partially_covered';
+  } else if (leaveCopy.status !== 'cancelled') {
+    leaveCopy.status = 'pending';
+  }
+
+  return leaveCopy;
+};
 
 // Create leave application
 export const createLeave = async (applicantId, leaveData) => {
   const { date, reason, lecturesOnLeave, type, isSubstitutionOnly, documentProof } = leaveData;
-  
+
   // Prevent duplicate leave applications for the same LECTURE SLOTS on the same date
-  const activeLeavesToday = leavesCollection.getAll().filter(l => 
-    l.applicantId === applicantId && 
-    l.date === date && 
+  const allLeaves = await apiCall('/leaves');
+  const activeLeavesToday = allLeaves.filter(l =>
+    l.applicantId === applicantId &&
+    l.date === date &&
     l.status !== 'cancelled'
   );
 
   const existingSlots = activeLeavesToday.flatMap(l => l.lecturesOnLeave.filter(lec => !lec.cancelled).map(lec => lec.slot));
   const newSlots = lecturesOnLeave.map(l => l.slot);
-  
+
   const overlap = newSlots.filter(s => existingSlots.includes(s));
-  
+
   // Check for an existing active leave to merge with
   const existingActiveLeave = activeLeavesToday[0]; // Take the first one if multiple exist (should be only one)
 
@@ -33,16 +72,14 @@ export const createLeave = async (applicantId, leaveData) => {
     // Recalculate status based on all slots
     const totalSlots = updatedLectures.filter(l => !l.cancelled).length;
     const coveredSlots = updatedLectures.filter(l => !l.cancelled && l.covered).length;
-    
+
     let newStatus = 'pending';
     if (coveredSlots === totalSlots && totalSlots > 0) newStatus = 'fully_covered';
     else if (coveredSlots > 0) newStatus = 'partially_covered';
 
-    leavesCollection.update(existingActiveLeave._id, {
+    await apiCall(`/leaves/${existingActiveLeave._id}`, 'PUT', {
       lecturesOnLeave: updatedLectures,
       status: newStatus,
-      // Update reason if it was empty or just append if desired? 
-      // User didn't specify, I'll keep the original reason or combine them
       reason: existingActiveLeave.reason + (reason ? ` | ${reason}` : ''),
       type: existingActiveLeave.type || type,
       documentProof: existingActiveLeave.documentProof || documentProof,
@@ -52,7 +89,7 @@ export const createLeave = async (applicantId, leaveData) => {
     return await getLeaveById(existingActiveLeave._id);
   }
 
-  const savedLeave = leavesCollection.add({
+  const savedLeave = await apiCall('/leaves', 'POST', {
     applicantId,
     date,
     type,
@@ -60,27 +97,25 @@ export const createLeave = async (applicantId, leaveData) => {
     documentProof,
     reason,
     lecturesOnLeave: lecturesOnLeave.map(l => ({ ...l, covered: false, coveredById: null, cancelled: false })),
-    status: 'pending',
-    createdAt: new Date().toISOString()
   });
-
 
   return await getLeaveById(savedLeave._id);
 };
 
 // Get current user's leave applications
 export const getMyLeaves = async (userId) => {
-  const allLeaves = leavesCollection.getAll();
+  const allLeaves = await apiCall('/leaves');
+  const allRequests = await apiCall('/substitutionRequests');
   const myLeaves = allLeaves.filter(l => l.applicantId === userId);
-  
+
   const leaves = [];
-  
+
   for (const leave of myLeaves) {
-    const leaveCopy = { ...leave };
+    const leaveCopy = applyAcceptedCoverage(leave, allRequests);
     // Populate applicant
     const applicant = await getCurrentUserProfile(leaveCopy.applicantId);
     leaveCopy.applicant = applicant;
-    
+
     // Populate coveredBy for each lecture
     for (let i = 0; i < leaveCopy.lecturesOnLeave.length; i++) {
       if (leaveCopy.lecturesOnLeave[i].coveredById) {
@@ -88,20 +123,21 @@ export const getMyLeaves = async (userId) => {
         leaveCopy.lecturesOnLeave[i].coveredBy = coveredBy;
       }
     }
-    
+
     leaves.push(leaveCopy);
   }
-  
+
   return leaves.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 // Get ALL leaves (Admin)
 export const getAllLeaves = async () => {
-  const allLeaves = leavesCollection.getAll();
+  const allLeaves = await apiCall('/leaves');
+  const allRequests = await apiCall('/substitutionRequests');
   const leaves = [];
 
   for (const leave of allLeaves) {
-    const leaveCopy = { ...leave };
+    const leaveCopy = applyAcceptedCoverage(leave, allRequests);
     const applicant = await getCurrentUserProfile(leaveCopy.applicantId);
     leaveCopy.applicant = applicant;
 
@@ -126,18 +162,19 @@ export const getLeavesByDateRange = async (startDate, endDate) => {
 
 // Get specific leave application
 export const getLeaveById = async (leaveId) => {
-  const leave = leavesCollection.getById(leaveId);
-  
+  const leave = await apiCall(`/leaves/${leaveId}`);
+  const allRequests = await apiCall('/substitutionRequests');
+
   if (!leave) {
     throw new Error('Leave application not found');
   }
-  
-  const leaveCopy = { ...leave };
-  
+
+  const leaveCopy = applyAcceptedCoverage(leave, allRequests);
+
   // Populate applicant
   const applicant = await getCurrentUserProfile(leaveCopy.applicantId);
   leaveCopy.applicant = applicant;
-  
+
   // Populate coveredBy for each lecture
   for (let i = 0; i < leaveCopy.lecturesOnLeave.length; i++) {
     if (leaveCopy.lecturesOnLeave[i].coveredById) {
@@ -145,7 +182,7 @@ export const getLeaveById = async (leaveId) => {
       leaveCopy.lecturesOnLeave[i].coveredBy = coveredBy;
     }
   }
-  
+
   return leaveCopy;
 };
 // Cancel specific lecture from leave application
@@ -190,7 +227,7 @@ export const cancelLectureFromLeave = async (leaveId, slotNum, userId) => {
   const activeLectures = updatedLectures.filter(l => !l.cancelled);
   const status = activeLectures.length === 0 ? 'cancelled' : leave.status;
 
-  leavesCollection.update(leaveId, { 
+  await apiCall(`/leaves/${leaveId}`, 'PUT', {
     lecturesOnLeave: updatedLectures,
     status: status
   });
@@ -205,11 +242,11 @@ export const cancelLectureFromLeave = async (leaveId, slotNum, userId) => {
 // Cancel leave application
 export const cancelLeave = async (leaveId, userId) => {
   const leave = await getLeaveById(leaveId);
-  
+
   if (leave.applicantId !== userId) {
     throw new Error('Unauthorized');
   }
-  
-  const updatedLeave = leavesCollection.update(leaveId, { status: 'cancelled' });
-  return await getLeaveById(updatedLeave._id);
+
+  await apiCall(`/leaves/${leaveId}`, 'PUT', { status: 'cancelled' });
+  return await getLeaveById(leaveId);
 };

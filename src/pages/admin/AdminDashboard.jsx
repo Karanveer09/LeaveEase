@@ -36,6 +36,22 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const refresh = () => {
+      fetchData();
+    };
+
+    const intervalId = setInterval(refresh, 10000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
+
   const fetchData = async () => {
     try {
       const [allLeaves, allTeachers, pReqs] = await Promise.all([
