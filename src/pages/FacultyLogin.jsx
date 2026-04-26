@@ -204,7 +204,7 @@ export default function FacultyLogin() {
       </div>
 
       {showForgot && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
           <div className="card-flat" style={{ width: '90%', maxWidth: '400px', background: 'white', padding: '2rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Reset Password</h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>

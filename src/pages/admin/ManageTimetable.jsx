@@ -244,27 +244,28 @@ export default function ManageTimetable() {
 
           {selectedTeacher && timetable && (
             <div className="card-flat animate-in">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <h2 style={{ fontWeight: 700, fontSize: '1.15rem' }}>{selectedTeacher.name}</h2>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     {lectureCount(timetable)} lectures · {freeSlotCount(timetable)} free slots
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={() => {
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button className="btn btn-outline btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={() => {
                     setUploadJson(JSON.stringify(timetable, null, 2));
                     setShowUploadModal(true);
                   }}>
                     <Upload size={16} /> Bulk Upload
                   </button>
-                  <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={handleSave} disabled={saving}>
+                  <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={handleSave} disabled={saving}>
                     {saving ? <span className="spinner"></span> : <><Save size={16} /> Save Changes</>}
                   </button>
                 </div>
               </div>
 
-              {/* Timetable Grid */}
+              {/* Timetable Grid — scrollable on mobile */}
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', margin: '0 -1rem', padding: '0 1rem' }}>
               <div className="admin-timetable-grid">
                 <div className="tt-header-cell"></div>
                 {[1,2,3,4].map(slotNum => (
@@ -323,6 +324,7 @@ export default function ManageTimetable() {
                   </div>
                 ))}
               </div>
+              </div>
             </div>
           )}
         </>
@@ -336,6 +338,7 @@ export default function ManageTimetable() {
             Numbers show how many teachers are free for each slot. Click to see names.
           </p>
 
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', margin: '0 -1rem', padding: '0 1rem' }}>
           <div className="admin-timetable-grid">
             <div className="tt-header-cell"></div>
             {[1,2,3,4].map(slotNum => (
@@ -401,6 +404,7 @@ export default function ManageTimetable() {
                 })}
               </div>
             ))}
+          </div>
           </div>
 
           <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>

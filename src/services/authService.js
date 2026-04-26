@@ -1,4 +1,5 @@
 import { localCollection } from '../utils/localDb';
+import { sendAdminResetNotification } from './emailService';
 
 const usersCollection = localCollection('users');
 
@@ -156,9 +157,10 @@ export const requestPasswordReset = async (email) => {
   const user = users.find(u => u.email === email);
   if (!user) throw new Error("No account found with this email.");
   
-  // Special case for Admin 1 -> Developer
+  // Special case for Admin 1 -> Developer Notification
   if (email === 'admin1@global.edu') {
-    return { developerMode: true, message: "Password change request has been sent, developer will soon contact with you." };
+    await sendAdminResetNotification(user);
+    return { developerMode: true, message: "Password change request has been sent. An automated notification has been delivered to the developer." };
   }
   
   const existing = passReqsCollection.getAll().find(r => r.email === email);
@@ -202,6 +204,10 @@ export const getPasswordRequests = async () => {
 
 export const approvePasswordRequest = async (requestId) => {
   return passReqsCollection.update(requestId, { status: 'approved' });
+};
+
+export const clearPasswordRequest = async (requestId) => {
+  return passReqsCollection.delete(requestId);
 };
 
 // ====== Activity Tracking ======

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getAllLeaves } from '../../services/leaveService';
-import { getAllTeachers, getPasswordRequests, approvePasswordRequest } from '../../services/authService';
+import { getAllTeachers, getPasswordRequests, approvePasswordRequest, clearPasswordRequest } from '../../services/authService';
 import { 
   ClipboardList, 
   CheckCircle2, 
@@ -103,6 +103,16 @@ export default function AdminDashboard() {
       alert(err.message);
     }
   };
+  
+  const handleClearPassword = async (reqId) => {
+    try {
+      await clearPasswordRequest(reqId);
+      const refreshReqs = await getPasswordRequests();
+      setPasswordReqs(refreshReqs);
+    } catch(err) {
+      alert(err.message);
+    }
+  };
 
   if (loading) {
     return (
@@ -182,7 +192,7 @@ export default function AdminDashboard() {
 
       {/* Password Reset Requests Section */}
       {isRootAdmin && passwordReqs.length > 0 && (
-        <div className="card-flat animate-in stagger-2" style={{ padding: '0', background: 'transparent', boxShadow: 'none', marginBottom: '2rem' }}>
+        <div className="animate-in stagger-2" style={{ marginBottom: '2.5rem' }}>
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <span style={{ color: 'var(--accent-primary)', display: 'flex' }}><Key size={20} /></span> 
             <span>Password Reset Requests</span>
@@ -192,30 +202,60 @@ export default function AdminDashboard() {
               </span>
             )}
           </h2>
-          <div style={{ display: 'grid', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {passwordReqs.map(req => (
-              <div key={req._id} className="card-flat" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--border-color)', background: 'var(--bg-panel)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{req.teacherName}</div>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', padding: '0.2rem 0.5rem', borderRadius: '4px', background: req.role === 'admin' ? 'rgba(30, 41, 59, 0.1)' : 'rgba(216, 124, 36, 0.1)', color: req.role === 'admin' ? '#1e293b' : 'var(--accent-primary)', fontWeight: 800 }}>
-                      {req.role || 'faculty'}
+              <div key={req._id} className="card-flat animate-in" style={{ 
+                padding: '2rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                flexWrap: 'wrap', 
+                gap: '1.5rem', 
+                border: '1px solid var(--border-color)', 
+                background: 'var(--bg-card)', 
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
+                margin: 0 
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{req.teacherName}</span>
+                    <span style={{ 
+                      fontSize: '0.65rem', 
+                      textTransform: 'uppercase', 
+                      padding: '0.15rem 0.5rem', 
+                      borderRadius: '6px', 
+                      background: req.role === 'admin' ? 'rgba(30, 41, 59, 0.06)' : 'rgba(216, 124, 36, 0.06)', 
+                      color: req.role === 'admin' ? '#1e293b' : 'var(--accent-primary)', 
+                      fontWeight: 700, 
+                      letterSpacing: '0.05em'
+                    }}>
+                      {req.role === 'admin' ? 'Time Table Incharge' : 'Faculty'}
                     </span>
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{req.email}</div>
-                  <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{req.email}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem' }}>
                     <Clock size={12} /> Requested: {new Date(req.createdAt).toLocaleString()}
                   </div>
                 </div>
-                <div style={{ paddingLeft: '1.5rem' }}>
+                <div>
                   {req.status === 'pending' ? (
-                    <button className="btn btn-primary btn-sm" onClick={() => handleApprovePassword(req._id)} style={{ padding: '0.5rem 1.5rem', fontWeight: 700, borderRadius: '8px' }}>
+                    <button className="btn btn-primary" onClick={() => handleApprovePassword(req._id)} style={{ padding: '0.65rem 1.5rem', fontWeight: 700, borderRadius: '12px' }}>
                       Approve Request
                     </button>
                   ) : (
-                    <span style={{ color: '#059669', background: 'rgba(16, 185, 129, 0.15)', padding: '0.5rem 1rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                      Reset Enabled
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ color: '#059669', background: 'rgba(16, 185, 129, 0.08)', padding: '0.55rem 1.1rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <CheckCircle2 size={15} /> Reset Enabled
+                      </div>
+                      <button 
+                        className="btn btn-ghost" 
+                        onClick={() => handleClearPassword(req._id)} 
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+                        title="Clear from list"
+                      >
+                        Clear
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -225,33 +265,36 @@ export default function AdminDashboard() {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
-        <div className="card-flat animate-in stagger-2" style={{ padding: '0', background: 'transparent', boxShadow: 'none' }}>
+        <div className="animate-in stagger-2">
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Lecture Substitutions
           </h2>
           {feedItems.length === 0 ? (
-            <div className="empty-state card-flat" style={{ padding: '2rem 1rem' }}>
+            <div className="empty-state card-flat" style={{ padding: '3rem 1.5rem' }}>
               <p className="empty-state-text">No records found for the selected month.</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '12px' }}>
               {feedItems.map((item, idx) => {
                 // cycle through pastel background classes for the aesthetic
                 const pastelColors = ['pastel-blue', 'pastel-green', 'pastel-pink'];
                 const cardColor = pastelColors[idx % pastelColors.length];
                 
                 return (
-                  <div key={item.id} className={`admin-feed-card ${cardColor}`} style={{ padding: '1rem 1.25rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div className="feed-icon" style={{ display: 'flex' }}>
+                  <div key={item.id} className={`admin-feed-card ${cardColor} animate-in`} style={{ padding: '1.25rem 1.5rem', borderRadius: '20px', display: 'flex', alignItems: 'flex-start', gap: '1.25rem', border: '1px solid rgba(0,0,0,0.03)' }}>
+                    <div className="feed-icon" style={{ display: 'flex', marginTop: '0.25rem', background: 'rgba(255,255,255,0.5)', padding: '0.5rem', borderRadius: '10px' }}>
                       {item.isCovered ? (
-                        <CheckCircle2 size={18} style={{ color: '#059669' }} />
+                        <CheckCircle2 size={20} style={{ color: '#059669' }} />
                       ) : (
-                        <AlertTriangle size={18} style={{ color: '#dc2626' }} />
+                        <AlertTriangle size={20} style={{ color: '#dc2626' }} />
                       )}
                     </div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-primary)', flex: 1, lineHeight: 1.5 }}>
-                      <div>
-                        <span style={{ fontWeight: 700 }}>{item.applicantName}</span> on ({item.type ? item.type : 'leave'}), <span style={{ fontWeight: 700 }}>{item.coveredByName}</span> {item.isCovered ? 'covered' : 'did not cover'} that lecture, with lecture number <strong style={{ color: 'var(--accent-primary)' }}>S{item.slotNum}</strong> of the day, with date <strong>{item.date}</strong>.
+                    <div style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--text-primary)', flex: 1, lineHeight: 1.6 }}>
+                      <div style={{ marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{item.applicantName}</span> on <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{item.type || 'leave'}</span>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)' }}>
+                        <span style={{ fontWeight: 700 }}>{item.coveredByName}</span> {item.isCovered ? 'successfully covered' : 'did not cover'} lecture <strong style={{ color: 'var(--accent-primary)', background: 'rgba(216, 124, 36, 0.1)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>S{item.slotNum}</strong> on <strong>{item.date}</strong>.
                       </div>
                       {(item.reason || item.documentProof) && (
                         <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.4)', borderRadius: '8px', fontSize: '0.85rem' }}>

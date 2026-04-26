@@ -32,6 +32,7 @@ export default function LeaveDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [confirmModal, setConfirmModal] = useState({ show: false, slot: null });
 
   useEffect(() => {
     if (user) {
@@ -108,10 +109,13 @@ export default function LeaveDetail() {
   };
 
   const cancelSlot = async (slotNum) => {
-    if (!window.confirm(`Are you sure you want to cancel the leave for slot ${slotNum}? Any active substitution requests for this slot will be revoked.`)) {
-      return;
-    }
+    setConfirmModal({ show: true, slot: slotNum });
+  };
 
+  const handleConfirmCancel = async () => {
+    const slotNum = confirmModal.slot;
+    setConfirmModal({ show: false, slot: null });
+    
     setLoading(true);
     setError('');
     setSuccess('');
@@ -333,7 +337,7 @@ export default function LeaveDetail() {
               </div>
 
               {/* Find substitute button */}
-              {isOwner && !lecture.covered && (
+              {isOwner && !lecture.covered && !lecture.cancelled && (
                 <button
                   className="btn btn-outline btn-full"
                   style={{ marginTop: '1.5rem', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}
@@ -447,6 +451,41 @@ export default function LeaveDetail() {
                 onClick={() => { setSelectedSlot(null); setAvailableTeachersList([]); }}
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal.show && (
+        <div className="modal-overlay" onClick={() => setConfirmModal({ show: false, slot: null })}>
+          <div className="modal animate-in" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ width: '64px', height: '64px', background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+                <XCircle size={32} />
+              </div>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Cancel Lecture Leave?</h3>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                Are you sure you want to cancel the leave for <strong>Slot {confirmModal.slot}</strong>? 
+                <br/>Any active substitution requests for this slot will be <span style={{ color: '#dc2626', fontWeight: 700 }}>revoked</span>.
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ flex: 1 }} 
+                onClick={() => setConfirmModal({ show: false, slot: null })}
+              >
+                No, Keep it
+              </button>
+              <button 
+                className="btn btn-danger" 
+                style={{ flex: 1 }} 
+                onClick={handleConfirmCancel}
+              >
+                Yes, Cancel Slot
               </button>
             </div>
           </div>

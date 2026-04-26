@@ -21,6 +21,7 @@ export default function ManageHolidays() {
   const [newDate, setNewDate] = useState('');
   const [newReason, setNewReason] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ show: false, id: null, name: '' });
 
   useEffect(() => { fetchHolidays(); }, []);
 
@@ -57,7 +58,14 @@ export default function ManageHolidays() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this holiday?')) return;
+    const holiday = holidays.find(h => h._id === id);
+    setConfirmModal({ show: true, id, name: holiday?.reason || 'this holiday' });
+  };
+
+  const handleConfirmDelete = async () => {
+    const id = confirmModal.id;
+    setConfirmModal({ show: false, id: null, name: '' });
+    
     try {
       await deleteHoliday(user._id, id);
       setSuccess('Holiday deleted');
@@ -198,6 +206,40 @@ export default function ManageHolidays() {
           )}
         </div>
       </div>
+      {/* Custom Confirmation Modal */}
+      {confirmModal.show && (
+        <div className="modal-overlay" onClick={() => setConfirmModal({ show: false, id: null, name: '' })}>
+          <div className="modal animate-in" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ width: '64px', height: '64px', background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+                <Trash2 size={32} />
+              </div>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Delete Holiday?</h3>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                Are you sure you want to delete the holiday <strong>{confirmModal.name}</strong>? 
+                <br/>This action will re-allow faculty to apply for leave on this date.
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ flex: 1 }} 
+                onClick={() => setConfirmModal({ show: false, id: null, name: '' })}
+              >
+                No, Keep it
+              </button>
+              <button 
+                className="btn btn-danger" 
+                style={{ flex: 1 }} 
+                onClick={handleConfirmDelete}
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

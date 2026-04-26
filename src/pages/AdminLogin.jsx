@@ -60,10 +60,11 @@ export default function AdminLogin() {
       if (forgotStep === 'email') {
         // FORCE DEVELOPER CHECK FIRST
         if (forgotEmail === 'admin1@global.edu') {
+          const result = await requestPasswordReset(forgotEmail);
           setForgotStep('pending');
-          setForgotMsg({
-            type: 'success',
-            text: "Password change request has been sent, developer will soon contact with you."
+          setForgotMsg({ 
+            type: 'success', 
+            text: result.message || "Request sent! The developer has been notified automatically." 
           });
           return;
         }
@@ -194,7 +195,7 @@ export default function AdminLogin() {
 
       {/* Forgot Password Modal for Admins */}
       {showForgot && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
           <div className="card-flat" style={{ width: '90%', maxWidth: '400px', background: 'white', padding: '2rem', borderTop: '4px solid #1e293b' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Shield size={20} /> Secure Reset

@@ -16,7 +16,9 @@ import {
   Sparkles,
   Activity,
   Palmtree,
-  CalendarCog
+  CalendarCog,
+  Menu,
+  X
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -24,6 +26,7 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   if (!user) return null;
 
@@ -37,59 +40,82 @@ export default function Sidebar() {
     logout();
     navigate(isAdmin ? '/admin/login' : '/login');
     setShowLogoutModal(false);
+    setIsMobileOpen(false);
   };
+
+  const toggleMobileMenu = () => setIsMobileOpen(!isMobileOpen);
+  const closeMobileMenu = () => setIsMobileOpen(false);
 
   return (
     <>
-      <aside className="sidebar">
+      {/* Mobile Hamburger Button — hidden when sidebar is open */}
+      {!isMobileOpen && (
+        <button 
+          className="mobile-menu-toggle" 
+          onClick={toggleMobileMenu}
+          aria-label="Open Menu"
+        >
+          <Menu size={24} />
+        </button>
+      )}
+
+      {/* Backdrop for mobile */}
+      {isMobileOpen && (
+        <div className="sidebar-overlay" onClick={closeMobileMenu}></div>
+      )}
+
+      <aside className={`sidebar ${isMobileOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <div className="logo-icon"><Sparkles size={20} fill="currentColor" /></div>
           <div className="logo-text">LeaveFlow</div>
+          <button className="mobile-close-btn" onClick={closeMobileMenu}>
+            <X size={20} />
+          </button>
         </div>
 
         <nav className="nav-links">
           {isAdmin ? (
             <>
-              <Link to="/admin/dashboard" className={`nav-link ${isActive('/admin/dashboard')}`}>
+              <Link to="/admin/dashboard" className={`nav-link ${isActive('/admin/dashboard')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><LayoutDashboard size={20} /></span>
                 <span>Reports</span>
               </Link>
-              <Link to="/admin/manage-teachers" className={`nav-link ${isActive('/admin/manage-teachers')}`}>
+              <Link to="/admin/manage-teachers" className={`nav-link ${isActive('/admin/manage-teachers')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><GraduationCap size={20} /></span>
                 <span>Teachers</span>
               </Link>
-              <Link to="/admin/manage-admins" className={`nav-link ${isActive('/admin/manage-admins')}`}>
+              <Link to="/admin/manage-admins" className={`nav-link ${isActive('/admin/manage-admins')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><ShieldCheck size={20} /></span>
                 <span>Admins</span>
               </Link>
-              <Link to="/admin/holidays" className={`nav-link ${isActive('/admin/holidays')}`}>
+              <Link to="/admin/holidays" className={`nav-link ${isActive('/admin/holidays')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><Palmtree size={20} /></span>
                 <span>Holidays</span>
               </Link>
-              <Link to="/admin/timetable" className={`nav-link ${isActive('/admin/timetable')}`}>
+              <Link to="/admin/timetable" className={`nav-link ${isActive('/admin/timetable')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><Calendar size={20} /></span>
                 <span>Timetable</span>
               </Link>
-              <Link to="/admin/activity" className={`nav-link ${isActive('/admin/activity')}`}>
+              <Link to="/admin/activity" className={`nav-link ${isActive('/admin/activity')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><Activity size={20} /></span>
                 <span>Activity</span>
               </Link>
             </>
           ) : (
             <>
-              <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`}>
+              <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><LayoutDashboard size={20} /></span>
                 <span>Dashboard</span>
               </Link>
-              <Link to="/apply-leave" className={`nav-link ${isActive('/apply-leave')}`}>
+              <Link to="/apply-leave" className={`nav-link ${isActive('/apply-leave')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><PlusSquare size={20} /></span>
                 <span>Apply Leave</span>
               </Link>
-              <Link to="/my-leaves" className={`nav-link ${isActive('/my-leaves')}`}>
+              <Link to="/my-leaves" className={`nav-link ${isActive('/my-leaves')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><FileText size={20} /></span>
                 <span>My Leaves</span>
               </Link>
-              <Link to="/incoming-requests" className={`nav-link ${isActive('/incoming-requests')}`}>
+              <Link to="/incoming-requests" className={`nav-link ${isActive('/incoming-requests')}`} onClick={closeMobileMenu}>
                 <span className="nav-icon"><Inbox size={20} /></span>
                 <span>Requests</span>
               </Link>
@@ -100,7 +126,10 @@ export default function Sidebar() {
         <div className="sidebar-user">
           <div 
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, cursor: 'pointer' }}
-            onClick={() => navigate(isAdmin ? '/admin/profile' : '/profile')}
+            onClick={() => {
+              navigate(isAdmin ? '/admin/profile' : '/profile');
+              closeMobileMenu();
+            }}
             title="View Profile"
           >
             <div className="user-avatar" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)' }}>
@@ -123,7 +152,9 @@ export default function Sidebar() {
           </div>
           <button 
             className="signout-btn" 
-            onClick={() => setShowLogoutModal(true)} 
+            onClick={() => {
+              setShowLogoutModal(true);
+            }} 
             title="Sign Out"
           >
             <span className="signout-icon"><Power size={18} /></span>
