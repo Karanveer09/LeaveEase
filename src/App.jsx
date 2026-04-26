@@ -64,7 +64,6 @@ function AppContent() {
                 <Route path="*" element={<AdminDashboard />} />
               </Routes>
             </main>
-            <Footer />
           </div>
         </AdminRoute>
       } />
@@ -86,7 +85,6 @@ function AppContent() {
                   <Route path="*" element={<Dashboard />} />
                 </Routes>
               </main>
-              <Footer />
             </div>
           </SetupGuard>
         </ProtectedRoute>

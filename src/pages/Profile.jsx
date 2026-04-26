@@ -184,13 +184,14 @@ export default function Profile() {
                           background: hasClass ? 'rgba(216, 124, 36, 0.05)' : 'transparent'
                         }}>
                           {hasClass ? (
-                            <span style={{ 
-                              display: 'inline-block', padding: '0.4rem 0.6rem', 
+                            <div style={{ 
+                              display: 'flex', flexDirection: 'column', gap: '0.1rem',
                               background: 'var(--accent-primary)', color: 'white', 
-                              borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 
+                              borderRadius: '6px', padding: '0.4rem 0.5rem',
                             }}>
-                              Class
-                            </span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 800 }}>{timetable?.[day]?.find(s => s.slot === slot)?.subject || 'Class'}</span>
+                              <span style={{ fontSize: '0.65rem', opacity: 1, fontWeight: 700 }}>{timetable?.[day]?.find(s => s.slot === slot)?.class || 'N/A'}</span>
+                            </div>
                           ) : (
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</span>
                           )}
@@ -224,13 +225,14 @@ export default function Profile() {
                           background: hasClass ? 'rgba(216, 124, 36, 0.05)' : 'transparent'
                         }}>
                           {hasClass ? (
-                            <span style={{ 
-                              display: 'inline-block', padding: '0.4rem 0.6rem', 
+                            <div style={{ 
+                              display: 'flex', flexDirection: 'column', gap: '0.1rem',
                               background: 'var(--accent-primary)', color: 'white', 
-                              borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 
+                              borderRadius: '6px', padding: '0.4rem 0.5rem',
                             }}>
-                              Class
-                            </span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 800 }}>{timetable?.[day]?.find(s => s.slot === slot)?.subject || 'Class'}</span>
+                              <span style={{ fontSize: '0.65rem', opacity: 1, fontWeight: 700 }}>{timetable?.[day]?.find(s => s.slot === slot)?.class || 'N/A'}</span>
+                            </div>
                           ) : (
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</span>
                           )}

@@ -182,7 +182,7 @@ export default function ApplyLeave() {
     try {
       const lecturesOnLeave = selectedSlots.map(slotNum => {
         const lecture = dayLectures.find(l => l.slot === slotNum);
-        return { slot: slotNum, subject: lecture.subject };
+        return { slot: slotNum, subject: lecture.subject, class: lecture.class };
       });
 
       const res = await createLeave(user._id, {
@@ -345,7 +345,7 @@ export default function ApplyLeave() {
                     >
                       <div className="timetable-slot-num">{slotNum}</div>
                       <div className="timetable-slot-subject">
-                        {isManaged ? 'Managed' : (hasLecture ? lecture.subject : 'Free')}
+                        {isManaged ? 'Managed' : (hasLecture ? `${lecture.subject} (${lecture.class || 'N/A'})` : 'Free')}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {SLOT_TIMES[slotNum]}

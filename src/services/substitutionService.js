@@ -7,7 +7,7 @@ const leavesCollection = localCollection('leaves');
 
 // Send substitution request
 export const sendSubstitutionRequest = async (requestData) => {
-  const { leaveApplicationId, fromTeacherId, toTeacherId, lectureSlot, subject, date } = requestData;
+  const { leaveApplicationId, fromTeacherId, toTeacherId, lectureSlot, subject, className, date } = requestData;
 
   const allRequests = substitutionsCollection.getAll();
 
@@ -40,6 +40,7 @@ export const sendSubstitutionRequest = async (requestData) => {
     toTeacherId,
     lectureSlot,
     subject,
+    class: className,
     date, // 'YYYY-MM-DD'
     status: 'pending',
     rejectionReason: '',

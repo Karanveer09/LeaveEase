@@ -67,7 +67,7 @@ const freeSlotsData = {
     2: ["T03", "T05", "T08", "T09", "T10", "T12"],
     3: ["T01", "T04", "T06", "T07", "T08", "T11", "T13", "T14", "T16"],
     4: ["T01", "T02", "T04", "T05", "T07", "T08", "T13", "T15", "T16"],
-    5: ["T01", "T04", "T05", "T06", "T07", "T08", "T11", "T16"],
+    5: ["T04", "T05", "T06", "T07", "T08", "T11", "T16"],
     6: ["T01", "T02", "T03", "T04", "T06", "T08", "T11", "T15", "T16"],
     7: ["T01", "T07", "T09", "T11", "T12", "T13", "T14", "T15", "T16"],
     8: ["T02", "T03", "T04", "T07", "T10", "T12", "T14"]
@@ -83,7 +83,122 @@ const sampleTeachers = rawFaculty.map(f => {
     [1, 2, 3, 4, 5, 6, 7, 8].forEach(slot => {
       const isFree = freeSlotsData[day][slot].includes(f.id);
       if (!isFree) {
-        timetable[day].push({ slot, subject: 'Class' });
+        let subject = 'Class';
+        let className = 'N/A';
+        
+        // Use real data if available
+
+        // REAL DATA FOR T01
+        if (f.id === 'T01') {
+          const schedule = [
+            {"day":"Monday","lecture":3,"class":"C8","subject":"NSC"},
+            {"day":"Monday","lecture":7,"class":"C4-2","subject":"OS"},
+            {"day":"Tuesday","lecture":2,"class":"C8","subject":"NSC"},
+            {"day":"Tuesday","lecture":1,"class":"C4-2","subject":"OS"},
+            {"day":"Wednesday","lecture":5,"class":"C8","subject":"NSC"},
+            {"day":"Wednesday","lecture":2,"class":"C4-2","subject":"OS"},
+            {"day":"Thursday","lecture":7,"class":"C4-2","subject":"OS"},
+            {"day":"Thursday","lecture":2,"class":"C8","subject":"NSC"},
+            {"day":"Friday","lecture":2,"class":"C4-2","subject":"OS"},
+            {"day":"Friday","lecture":5,"class":"C8","subject":"NSC"},
+          ];
+          
+          const match = schedule.find(s => s.day.toLowerCase() === day && s.lecture === slot);
+          if (match) {
+            subject = match.subject;
+            className = match.class;
+          }
+        }
+
+        // REAL DATA FOR T02 (BJS)
+        if (f.id === 'T02') {
+          const schedule = [
+            {"day":"Monday","lecture":1,"class":"C7","subject":"DMW"},
+            {"day":"Monday","lecture":3,"class":"C5","subject":"CD"},
+            {"day":"Monday","lecture":7,"class":"C6 (G1)","subject":"CD Lab"},
+            {"day":"Monday","lecture":8,"class":"C6 (G1)","subject":"CD Lab"},
+            {"day":"Tuesday","lecture":1,"class":"C5","subject":"CD"},
+            {"day":"Tuesday","lecture":3,"class":"C7","subject":"DMW"},
+            {"day":"Wednesday","lecture":3,"class":"C6 (G2)","subject":"CD Lab"},
+            {"day":"Wednesday","lecture":4,"class":"C6 (G2)","subject":"CD Lab"},
+            {"day":"Wednesday","lecture":5,"class":"C5","subject":"CD"},
+            {"day":"Thursday","lecture":2,"class":"C5","subject":"CD"},
+            {"day":"Thursday","lecture":4,"class":"C7","subject":"DMW"},
+            {"day":"Thursday","lecture":7,"class":"C5 (G1)","subject":"CD Lab"},
+            {"day":"Thursday","lecture":8,"class":"C5 (G1)","subject":"CD Lab"},
+            {"day":"Friday","lecture":1,"class":"C5 (G2)","subject":"CD Lab"},
+            {"day":"Friday","lecture":2,"class":"C5 (G2)","subject":"CD Lab"},
+            {"day":"Friday","lecture":3,"class":"C7","subject":"DMW"},
+            {"day":"Friday","lecture":5,"class":"C5","subject":"CD"}
+          ];
+          
+          const match = schedule.find(s => s.day.toLowerCase() === day && s.lecture === slot);
+          if (match) {
+            subject = match.subject;
+            className = match.class;
+          }
+        }
+
+        // REAL DATA FOR T11 (Satinderbir)
+        if (f.id === 'T11') {
+          const schedule = [
+            {"day":"Monday","lecture":2,"class":"C6","subject":"MPMC"},
+            {"day":"Monday","lecture":4,"class":"IT8","subject":"STQA"},
+            {"day":"Monday","lecture":7,"class":"C4-2 (G1)","subject":"DAA Lab"},
+            {"day":"Monday","lecture":8,"class":"C4-2 (G1)","subject":"DAA Lab"},
+            {"day":"Tuesday","lecture":1,"class":"C6","subject":"MPMC"},
+            {"day":"Tuesday","lecture":3,"class":"IT8","subject":"STQA"},
+            {"day":"Tuesday","lecture":6,"class":"IT-6","subject":"WT"},
+            {"day":"Wednesday","lecture":1,"class":"IT-6","subject":"WT"},
+            {"day":"Wednesday","lecture":3,"class":"C4-2 (G1)","subject":"DAA Lab"},
+            {"day":"Wednesday","lecture":4,"class":"C4-2 (G1)","subject":"DAA Lab"},
+            {"day":"Wednesday","lecture":5,"class":"C6","subject":"MPMC"},
+            {"day":"Wednesday","lecture":6,"class":"IT8","subject":"STQA"},
+            {"day":"Thursday","lecture":3,"class":"IT-6","subject":"WT"},
+            {"day":"Thursday","lecture":6,"class":"C6","subject":"MPMC"},
+            {"day":"Thursday","lecture":8,"class":"IT8","subject":"STQA"},
+            {"day":"Friday","lecture":2,"class":"IT-6","subject":"WT"},
+            {"day":"Friday","lecture":4,"class":"C6","subject":"MPMC"},
+            {"day":"Friday","lecture":8,"class":"IT8","subject":"STQA"}
+          ];
+          
+          const match = schedule.find(s => s.day.toLowerCase() === day && s.lecture === slot);
+          if (match) {
+            subject = match.subject;
+            className = match.class;
+          }
+        }
+
+        // REAL DATA FOR T12 (NS)
+        if (f.id === 'T12') {
+          const schedule = [
+            {"day":"Monday","lecture":3,"class":"IT-6","subject":"DS"},
+            {"day":"Monday","lecture":7,"class":"C5","subject":"AI"},
+            {"day":"Tuesday","lecture":2,"class":"IT-8","subject":"SPM"},
+            {"day":"Tuesday","lecture":6,"class":"IT-6","subject":"DS"},
+            {"day":"Tuesday","lecture":7,"class":"C5","subject":"AI"},
+            {"day":"Wednesday","lecture":1,"class":"C5","subject":"AI"},
+            {"day":"Wednesday","lecture":2,"class":"IT-6","subject":"OS"},
+            {"day":"Wednesday","lecture":6,"class":"IT-8","subject":"SPM"},
+            {"day":"Wednesday","lecture":7,"class":"C5","subject":"AI"},
+            {"day":"Thursday","lecture":3,"class":"IT-8","subject":"SPM Lab"},
+            {"day":"Thursday","lecture":4,"class":"IT-8","subject":"SPM Lab"},
+            {"day":"Thursday","lecture":6,"class":"IT-6","subject":"DS"},
+            {"day":"Friday","lecture":1,"class":"IT-6","subject":"OS"},
+            {"day":"Friday","lecture":3,"class":"C5","subject":"AI"},
+            {"day":"Friday","lecture":4,"class":"IT-8","subject":"SPM"},
+            {"day":"Friday","lecture":6,"class":"IT-6","subject":"DS Lab"},
+            {"day":"Friday","lecture":7,"class":"IT-6","subject":"DS Lab"}
+          ];
+          
+          const match = schedule.find(s => s.day.toLowerCase() === day && s.lecture === slot);
+          if (match) {
+            subject = match.subject;
+            className = match.class;
+          }
+        }
+
+        timetable[day].push({ slot, subject, class: className });
       }
     });
   });
@@ -121,7 +236,6 @@ export const seedDatabase = async () => {
   try {
     const existingUsers = usersCollection.getAll();
 
-    // Check if Tuesday 7 or 8 is incorrectly assigned to ANY teacher
     let needsTuesdayFix = false;
     for (const u of existingUsers) {
       if (u.timetable?.tuesday?.some(s => s.slot === 7 || s.slot === 8)) {
@@ -130,7 +244,35 @@ export const seedDatabase = async () => {
       }
     }
 
-    if (needsTuesdayFix || existingUsers.length === 0) {
+    let needsT01Update = false;
+    const t01 = existingUsers.find(u => u.email === 't01@global.edu');
+    if (t01 && t01.timetable?.monday?.some(s => s.subject === 'Class')) {
+      needsT01Update = true;
+    }
+
+    let needsSubjectUpdate = existingUsers.some(u => 
+      Object.values(u.timetable || {}).flat().some(s => s.subject === 'Lecture')
+    );
+
+    let needsT11Update = false;
+    const t11 = existingUsers.find(u => u.email === 't11@global.edu');
+    if (t11 && !t11.timetable?.monday?.some(s => s.subject === 'MPMC')) {
+      needsT11Update = true;
+    }
+
+    let needsT02Update = false;
+    const t02 = existingUsers.find(u => u.email === 't02@global.edu');
+    if (t02 && !t02.timetable?.monday?.some(s => s.subject === 'DMW')) {
+      needsT02Update = true;
+    }
+
+    let needsT12Update = false;
+    const t12 = existingUsers.find(u => u.email === 't12@global.edu');
+    if (t12 && !t12.timetable?.monday?.some(s => s.subject === 'DS')) {
+      needsT12Update = true;
+    }
+
+    if (needsTuesdayFix || needsT01Update || needsSubjectUpdate || needsT11Update || needsT02Update || needsT12Update || existingUsers.length === 0) {
       console.log('Migrating: clearing old data to ensure Tuesday 7 & 8 are entirely free...');
       usersCollection.setAll([]);
       const leavesCollection = localCollection('leaves');

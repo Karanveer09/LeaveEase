@@ -92,6 +92,7 @@ export default function LeaveDetail() {
         toTeacherId: teacherId,
         lectureSlot: selectedSlot,
         subject: lecture.subject,
+        className: lecture.class,
         date: leave.date
       });
 
@@ -271,7 +272,7 @@ export default function LeaveDetail() {
                   </div>
                   <div>
                     <div className="slot-subject" style={{ fontSize: '1.1rem', margin: 0, textDecoration: lecture.cancelled ? 'line-through' : 'none', color: lecture.cancelled ? 'var(--text-muted)' : 'inherit' }}>
-                      {lecture.subject}
+                      {lecture.subject} {lecture.class && <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>— {lecture.class}</span>}
                     </div>
                     <div className="slot-time" style={{ fontWeight: 500 }}>{SLOT_TIMES[lecture.slot]}</div>
                   </div>

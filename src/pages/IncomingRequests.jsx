@@ -194,7 +194,7 @@ export default function IncomingRequests() {
                     <span style={{ color: 'var(--text-muted)', display: 'flex' }}><Clock size={16} /></span> Slot {req.lectureSlot} ({SLOT_TIMES[req.lectureSlot]})
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                    <span style={{ color: 'var(--text-muted)', display: 'flex' }}><BookOpen size={16} /></span> {req.subject}
+                    <span style={{ color: 'var(--text-muted)', display: 'flex' }}><BookOpen size={16} /></span> {req.subject} {req.class && <span> — {req.class}</span>}
                   </div>
                 </div>
 

@@ -75,9 +75,12 @@ export default function ManageTimetable() {
     setError('');
   };
 
+  const [editClass, setEditClass] = useState('');
+  
   const openEditModal = (day, slotNum) => {
     const existing = timetable[day]?.find(s => s.slot === slotNum);
     setEditSubject(existing ? existing.subject : '');
+    setEditClass(existing ? existing.class || '' : '');
     setEditModal({ day, slot: slotNum });
   };
 
@@ -90,9 +93,9 @@ export default function ManageTimetable() {
       // Add or update
       const existing = newTimetable[day].findIndex(s => s.slot === slot);
       if (existing >= 0) {
-        newTimetable[day][existing] = { slot, subject: editSubject.trim() };
+        newTimetable[day][existing] = { slot, subject: editSubject.trim(), class: editClass.trim() };
       } else {
-        newTimetable[day] = [...newTimetable[day], { slot, subject: editSubject.trim() }].sort((a, b) => a.slot - b.slot);
+        newTimetable[day] = [...newTimetable[day], { slot, subject: editSubject.trim(), class: editClass.trim() }].sort((a, b) => a.slot - b.slot);
       }
     } else {
       // Remove
@@ -252,6 +255,18 @@ export default function ManageTimetable() {
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-color)' }} 
+                    onClick={() => {
+                      const allData = teachers.map(t => ({
+                        id: t._id,
+                        name: t.name,
+                        timetable: t.timetable
+                      }));
+                      navigator.clipboard.writeText(JSON.stringify(allData, null, 2));
+                      alert('All faculty data copied to clipboard! Send this to the AI to update the code seed.');
+                    }}>
+                    <ClipboardList size={16} /> Export All Data
+                  </button>
                   <button className="btn btn-outline btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={() => {
                     setUploadJson(JSON.stringify(timetable, null, 2));
                     setShowUploadModal(true);
@@ -296,7 +311,10 @@ export default function ManageTimetable() {
                           onClick={() => openEditModal(day, slotNum)}
                           title={lecture ? `${lecture.subject} — Click to edit` : 'Free — Click to add'}>
                           {lecture ? (
-                            <span className="tt-subject">{lecture.subject}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span className="tt-subject">{lecture.subject}</span>
+                              {lecture.class && <span style={{ fontSize: '0.65rem', opacity: 0.8, color: 'var(--text-primary)', fontWeight: 600 }}>({lecture.class})</span>}
+                            </div>
                           ) : (
                             <span className="tt-free">FREE</span>
                           )}
@@ -314,7 +332,10 @@ export default function ManageTimetable() {
                           onClick={() => openEditModal(day, slotNum)}
                           title={lecture ? `${lecture.subject} — Click to edit` : 'Free — Click to add'}>
                           {lecture ? (
-                            <span className="tt-subject">{lecture.subject}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span className="tt-subject">{lecture.subject}</span>
+                              {lecture.class && <span style={{ fontSize: '0.65rem', opacity: 0.8, color: 'var(--text-primary)', fontWeight: 600 }}>({lecture.class})</span>}
+                            </div>
                           ) : (
                             <span className="tt-free">FREE</span>
                           )}
@@ -436,10 +457,15 @@ export default function ManageTimetable() {
             </h3>
             <div className="form-group">
               <label className="form-label">Subject Name</label>
-              <input type="text" className="form-input" placeholder="Leave empty to mark as FREE"
+              <input type="text" className="form-input" placeholder="e.g. NSC, OS"
                 value={editSubject} onChange={e => setEditSubject(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && saveSlot()}
                 autoFocus />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Class / Room</label>
+              <input type="text" className="form-input" placeholder="e.g. C8, C4-2"
+                value={editClass} onChange={e => setEditClass(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && saveSlot()} />
             </div>
             <div className="modal-actions">
               <button className="btn btn-ghost" onClick={() => setEditModal(null)}>Cancel</button>
