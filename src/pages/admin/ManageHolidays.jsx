@@ -19,7 +19,7 @@ export default function ManageHolidays() {
   const [success, setSuccess] = useState('');
   
   const [newDate, setNewDate] = useState('');
-  const [newReason, setNewReason] = useState('');
+  const [newName, setNewName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ show: false, id: null, name: '' });
 
@@ -38,17 +38,17 @@ export default function ManageHolidays() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!newDate || !newReason) return;
+    if (!newDate || !newName) return;
     
     setIsAdding(true);
     setError('');
     setSuccess('');
 
     try {
-      await addHoliday(user._id, { date: newDate, reason: newReason });
+      await addHoliday(user._id, { date: newDate, name: newName });
       setSuccess('Holiday added successfully!');
       setNewDate('');
-      setNewReason('');
+      setNewName('');
       fetchHolidays();
     } catch (err) {
       setError(err.message);
@@ -59,7 +59,7 @@ export default function ManageHolidays() {
 
   const handleDelete = async (id) => {
     const holiday = holidays.find(h => h._id === id);
-    setConfirmModal({ show: true, id, name: holiday?.reason || 'this holiday' });
+    setConfirmModal({ show: true, id, name: holiday?.name || 'this holiday' });
   };
 
   const handleConfirmDelete = async () => {
@@ -129,8 +129,8 @@ export default function ManageHolidays() {
                 type="text" 
                 className="form-input" 
                 placeholder="e.g. Diwali, Independence Day" 
-                value={newReason} 
-                onChange={e => setNewReason(e.target.value)} 
+                value={newName} 
+                onChange={e => setNewName(e.target.value)} 
                 required 
               />
             </div>
@@ -181,7 +181,7 @@ export default function ManageHolidays() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <div style={{ fontWeight: 700, fontSize: '1rem', color: isPast ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-                          {h.reason}
+                          {h.name}
                         </div>
                         {isPast && (
                           <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '4px', background: '#e2e8f0', color: '#64748b', fontWeight: 600 }}>

@@ -99,6 +99,9 @@ const ensureColumn = (table, column, definition) => {
 ensureColumn('users', 'timetable', "TEXT DEFAULT '[]'");
 ensureColumn('users', 'profileSetup', 'INTEGER DEFAULT 0');
 ensureColumn('users', 'lastActive', 'TEXT');
+ensureColumn('substitutionRequests', 'rejectionReason', 'TEXT');
+ensureColumn('leaves', 'isSubstitutionOnly', 'INTEGER DEFAULT 0');
+ensureColumn('timetableOverrides', 'followsDay', 'TEXT');
 
 const defaultTimetable = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] };
 const normalizeLeave = (leave) => {
@@ -482,15 +485,15 @@ app.get('/api/timetableOverrides', (req, res) => {
 });
 
 app.post('/api/timetableOverrides', (req, res) => {
-  const { date, period, originalTeacherId, substituteTeacherId, reason } = req.body;
+  const { date, period, originalTeacherId, substituteTeacherId, reason, followsDay } = req.body;
   const _id = generateId();
   const stmt = db.prepare(`
-    INSERT INTO timetableOverrides (_id, date, period, originalTeacherId, substituteTeacherId, reason, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO timetableOverrides (_id, date, period, originalTeacherId, substituteTeacherId, reason, followsDay, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
   try {
-    stmt.run(_id, date, period, originalTeacherId, substituteTeacherId, reason, new Date().toISOString());
-    res.status(201).json({ _id, date, period, originalTeacherId, substituteTeacherId, reason, createdAt: new Date().toISOString() });
+    stmt.run(_id, date, period, originalTeacherId, substituteTeacherId, reason, followsDay, new Date().toISOString());
+    res.status(201).json({ _id, date, period, originalTeacherId, substituteTeacherId, reason, followsDay, createdAt: new Date().toISOString() });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
