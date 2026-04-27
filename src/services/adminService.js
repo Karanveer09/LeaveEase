@@ -1,13 +1,7 @@
-import { localCollection } from '../utils/localDb';
+import { apiCall } from '../utils/api';
 
-const holidaysCollection = localCollection('holidays');
-const overridesCollection = localCollection('timetableOverrides');
-const usersCollection = localCollection('users');
-const leavesCollection = localCollection('leaves');
-const substitutionsCollection = localCollection('substitutionRequests');
-
-const checkAdmin = (adminId) => {
-  const admin = usersCollection.getById(adminId);
+const checkAdmin = async (adminId) => {
+  const admin = await apiCall(`/users/${adminId}`);
   if (!admin || admin.role !== 'admin') {
     throw new Error('Unauthorized: Admin access required.');
   }
@@ -15,64 +9,63 @@ const checkAdmin = (adminId) => {
 
 // ====== Holidays ======
 export const addHoliday = async (adminId, holidayData) => {
-  checkAdmin(adminId);
-  
+  await checkAdmin(adminId);
+
   const date = holidayData.date;
-  
+
   // 1. Cancel all active leaves on this date
-  const leavesOnDate = leavesCollection.getAll().filter(l => l.date === date && l.status !== 'cancelled');
+  const allLeaves = await apiCall('/leaves');
+  const leavesOnDate = allLeaves.filter(l => l.date === date && l.status !== 'cancelled');
   for (const leave of leavesOnDate) {
-    leavesCollection.update(leave._id, {
+    await apiCall(`/leaves/${leave._id}`, 'PUT', {
       status: 'cancelled',
       reason: (leave.reason ? leave.reason + " | " : "") + `Cancelled: Date declared as holiday (${holidayData.name})`
     });
   }
 
   // 2. Cancel all substitution requests on this date
-  const subsOnDate = substitutionsCollection.getAll().filter(s => s.date === date && s.status !== 'cancelled' && s.status !== 'rejected');
+  const allSubs = await apiCall('/substitutionRequests');
+  const subsOnDate = allSubs.filter(s => s.date === date && s.status !== 'cancelled' && s.status !== 'rejected');
   for (const sub of subsOnDate) {
-    substitutionsCollection.update(sub._id, {
+    await apiCall(`/substitutionRequests/${sub._id}`, 'PUT', {
       status: 'cancelled',
       rejectionReason: `Cancelled: Date declared as holiday (${holidayData.name})`
     });
   }
 
-  return holidaysCollection.add({
-    ...holidayData,
-    createdAt: new Date().toISOString()
-  });
+  return await apiCall('/holidays', 'POST', holidayData);
 };
 
 export const getHolidays = async () => {
-  return holidaysCollection.getAll().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const holidays = await apiCall('/holidays');
+  return holidays.sort((a, b) => new Date(a.date) - new Date(b.date));
 };
 
 export const deleteHoliday = async (adminId, holidayId) => {
-  checkAdmin(adminId);
-  return holidaysCollection.delete(holidayId);
+  await checkAdmin(adminId);
+  await apiCall(`/holidays/${holidayId}`, 'DELETE');
 };
 
 // ====== Timetable Overrides (Saturdays) ======
 export const setSaturdayOverride = async (adminId, overrideData) => {
-  checkAdmin(adminId);
-  
+  await checkAdmin(adminId);
+
   // Clean up existing override for same date
-  const existing = overridesCollection.getAll().find(o => o.date === overrideData.date);
+  const allOverrides = await apiCall('/timetableOverrides');
+  const existing = allOverrides.find(o => o.date === overrideData.date);
   if (existing) {
-    overridesCollection.delete(existing._id);
+    await apiCall(`/timetableOverrides/${existing._id}`, 'DELETE');
   }
 
-  return overridesCollection.add({
-    ...overrideData,
-    createdAt: new Date().toISOString()
-  });
+  return await apiCall('/timetableOverrides', 'POST', overrideData);
 };
 
 export const getSaturdayOverrides = async () => {
-  return overridesCollection.getAll().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const overrides = await apiCall('/timetableOverrides');
+  return overrides.sort((a, b) => new Date(a.date) - new Date(b.date));
 };
 
 export const deleteSaturdayOverride = async (adminId, overrideId) => {
-  checkAdmin(adminId);
-  return overridesCollection.delete(overrideId);
+  await checkAdmin(adminId);
+  await apiCall(`/timetableOverrides/${overrideId}`, 'DELETE');
 };

@@ -1,19 +1,11 @@
-import { localCollection } from '../utils/localDb';
 import { sendAdminResetNotification } from './emailService';
-
-const usersCollection = localCollection('users');
+import { apiCall } from '../utils/api';
 
 // Login User
 export const loginUser = async (email, password) => {
-  const users = usersCollection.getAll();
-  const user = users.find(u => u.email === email && u.password === password);
-  
-  if (!user) {
-    throw new Error('Invalid email or password');
-  }
-  
-  localStorage.setItem('currentUser', JSON.stringify({ uid: user._id }));
-  return user;
+  const response = await apiCall('/auth/login', 'POST', { email, password });
+  localStorage.setItem('currentUser', JSON.stringify({ uid: response._id }));
+  return response;
 };
 
 // Logout User
@@ -28,34 +20,30 @@ export const getCurrentUserProfile = async (uid) => {
     if (!authData) return null;
     uid = JSON.parse(authData).uid;
   }
-  const user = usersCollection.getById(uid);
-  return user || null;
+  return await apiCall(`/users/${uid}`);
 };
 
 // Link Admin to a Teacher Profile
 export const linkAdminToTeacher = async (adminId, teacherId) => {
-  const admin = usersCollection.getById(adminId);
+  const admin = await apiCall(`/users/${adminId}`);
   if (!admin || admin.role !== 'admin') {
     throw new Error('Unauthorized');
   }
-  return usersCollection.update(adminId, { linkedTeacherId: teacherId });
+  return await apiCall(`/users/${adminId}`, 'PUT', { linkedTeacherId: teacherId });
 };
 
 // Unlink Admin from Teacher Profile
 export const unlinkAdminFromTeacher = async (adminId) => {
-  const admin = usersCollection.getById(adminId);
+  const admin = await apiCall(`/users/${adminId}`);
   if (!admin || admin.role !== 'admin') {
     throw new Error('Unauthorized');
   }
-  // We can either set it to null or remove the key. Setting to null is fine.
-  return usersCollection.update(adminId, { linkedTeacherId: null });
+  return await apiCall(`/users/${adminId}`, 'PUT', { linkedTeacherId: null });
 };
-
-// ====== Admin Functions ======
 
 // Create Teacher Account (Admin only)
 export const createTeacherAccount = async (adminId, teacherData) => {
-  const admin = usersCollection.getById(adminId);
+  const admin = await apiCall(`/users/${adminId}`);
   if (!admin || admin.role !== 'admin') {
     throw new Error('Unauthorized: Only admins can create teacher accounts');
   }
@@ -63,24 +51,19 @@ export const createTeacherAccount = async (adminId, teacherData) => {
   const { name, email, password, department } = teacherData;
 
   // Check if user exists
-  const existingUsers = usersCollection.getAll();
-  const userExists = existingUsers.find(u => u.email === email);
+  const allUsers = await apiCall('/users');
+  const userExists = allUsers.find(u => u.email === email);
   if (userExists) {
     throw new Error('A user with this email already exists.');
   }
 
-  const newUser = usersCollection.add({
+  const newUser = await apiCall('/users', 'POST', {
     email,
     password,
     name,
     department,
     role: 'teacher',
-    profileSetup: false,
-    timetable: {
-      monday: [], tuesday: [], wednesday: [],
-      thursday: [], friday: []
-    },
-    createdAt: new Date().toISOString()
+    profileComplete: false,
   });
 
   return newUser;
@@ -88,131 +71,94 @@ export const createTeacherAccount = async (adminId, teacherData) => {
 
 // Update Teacher Profile (timetable setup)
 export const updateTeacherProfile = async (uid, updates) => {
-  const user = usersCollection.getById(uid);
+  const user = await apiCall(`/users/${uid}`);
   if (!user) throw new Error('User not found');
 
-  const updatedUser = usersCollection.update(uid, {
+  const updatedUser = await apiCall(`/users/${uid}`, 'PUT', {
     ...updates,
-    profileSetup: true
+    profileComplete: true,
   });
-  return updatedUser;
-};
-
-// Update Timetable (admin or self)
-export const updateTimetable = async (uid, timetable) => {
-  const updatedUser = usersCollection.update(uid, { timetable, profileSetup: true });
   return updatedUser;
 };
 
 // Get All Teachers
 export const getAllTeachers = async () => {
-  const users = usersCollection.getAll();
+  const users = await apiCall('/users');
   return users.filter(u => u.role === 'teacher');
 };
 
 // Get All Admins
 export const getAllAdmins = async () => {
-  const users = usersCollection.getAll();
+  const users = await apiCall('/users');
   return users.filter(u => u.role === 'admin');
 };
 
 // Get All Teachers (except given user)
 export const getAllTeachersInfo = async (currentUid) => {
-  const users = usersCollection.getAll();
+  const users = await apiCall('/users');
   return users.filter(doc => doc._id !== currentUid && doc.role === 'teacher');
 };
 
 // Delete Teacher (Admin only)
 export const deleteTeacher = async (adminId, teacherId) => {
-  const admin = usersCollection.getById(adminId);
+  const admin = await apiCall(`/users/${adminId}`);
   if (!admin || admin.role !== 'admin') {
     throw new Error('Unauthorized: Only admins can delete teacher accounts');
   }
 
-  const teacher = usersCollection.getById(teacherId);
+  const teacher = await apiCall(`/users/${teacherId}`);
   if (!teacher || teacher.role !== 'teacher') {
     throw new Error('Teacher not found');
   }
 
-  usersCollection.delete(teacherId);
+  await apiCall(`/users/${teacherId}`, 'DELETE');
   return true;
 };
 
 // Update teacher details (Admin only)
 export const updateTeacherDetails = async (adminId, teacherId, updates) => {
-  const admin = usersCollection.getById(adminId);
+  const admin = await apiCall(`/users/${adminId}`);
   if (!admin || admin.role !== 'admin') {
     throw new Error('Unauthorized');
   }
 
-  const updatedUser = usersCollection.update(teacherId, updates);
+  const updatedUser = await apiCall(`/users/${teacherId}`, 'PUT', updates);
   return updatedUser;
 };
 
-// ====== Password Reset Flows ======
-const passReqsCollection = localCollection('passwordRequests');
+// Activity Tracking
+export const updateLastActive = async (uid) => {
+  if (!uid) return null;
+  return await apiCall(`/users/${uid}`, 'PUT', { lastActive: new Date().toISOString() });
+};
 
+// Password Reset Functions
 export const requestPasswordReset = async (email) => {
-  const users = usersCollection.getAll();
-  const user = users.find(u => u.email === email);
-  if (!user) throw new Error("No account found with this email.");
-  
-  // Special case for Admin 1 -> Developer Notification
-  if (email === 'admin1@global.edu') {
-    await sendAdminResetNotification(user);
-    return { developerMode: true, message: "Password change request has been sent. An automated notification has been delivered to the developer." };
-  }
-  
-  const existing = passReqsCollection.getAll().find(r => r.email === email);
-  if (existing) return existing;
-  
-  return passReqsCollection.add({ 
-    email, 
-    status: 'pending', 
-    teacherName: user.name,
-    role: user.role,
-    createdAt: new Date().toISOString() 
-  });
+  return await apiCall('/auth/request-reset', 'POST', { email });
 };
 
 export const checkPasswordRequestStatus = async (email) => {
-  const req = passReqsCollection.getAll().find(r => r.email === email);
-  return req || null;
+  return await apiCall(`/auth/reset-status/${encodeURIComponent(email)}`);
 };
 
 export const submitNewPassword = async (email, newPassword) => {
-  const req = passReqsCollection.getAll().find(r => r.email === email && r.status === 'approved');
-  if (!req) throw new Error("No approved password reset request found.");
-
-  if (email === 'admin1@global.edu') {
-    throw new Error("Security Restriction: Admin 1 password can only be changed by the developer.");
-  }
-  
-  const users = usersCollection.getAll();
-  const user = users.find(u => u.email === email);
-  if (user) {
-    usersCollection.update(user._id, { password: newPassword });
-    passReqsCollection.delete(req._id);
-    return true;
-  }
-  throw new Error("User not found.");
+  return await apiCall('/auth/submit-password', 'POST', { email, newPassword });
 };
 
+// Admin Password Request Management
 export const getPasswordRequests = async () => {
-  return passReqsCollection.getAll().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return await apiCall('/auth/password-requests');
 };
 
 export const approvePasswordRequest = async (requestId) => {
-  return passReqsCollection.update(requestId, { status: 'approved' });
+  return await apiCall(`/auth/approve-request/${requestId}`, 'POST');
 };
 
 export const clearPasswordRequest = async (requestId) => {
-  return passReqsCollection.delete(requestId);
+  return await apiCall(`/auth/clear-request/${requestId}`, 'DELETE');
 };
 
-// ====== Activity Tracking ======
-export const updateLastActive = async (uid) => {
-  const user = usersCollection.getById(uid);
-  if (!user) return null;
-  return usersCollection.update(uid, { lastActive: new Date().toISOString() });
+// Timetable Management
+export const updateTimetable = async (teacherId, timetableData) => {
+  return await apiCall(`/users/${teacherId}/timetable`, 'PUT', timetableData);
 };

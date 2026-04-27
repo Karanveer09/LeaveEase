@@ -15,6 +15,24 @@ export default function MyLeaves() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const refresh = () => {
+      fetchLeaves();
+    };
+
+    const intervalId = setInterval(refresh, 10000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [user]);
+
   const fetchLeaves = async () => {
     try {
       const myLeaves = await getMyLeaves(user._id);

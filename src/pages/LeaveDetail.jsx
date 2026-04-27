@@ -40,6 +40,24 @@ export default function LeaveDetail() {
     }
   }, [id, user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const refresh = () => {
+      fetchData();
+    };
+
+    const intervalId = setInterval(refresh, 10000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [id, user]);
+
   const fetchData = async () => {
     try {
       const leaveData = await getLeaveById(id);
@@ -64,8 +82,8 @@ export default function LeaveDetail() {
 
       // Filter out teachers who have already been sent a pending request for this slot
       const pendingRequestTeacherIds = requests
-        .filter(r => r.lectureSlot === slot && r.status === 'pending')
-        .map(r => r.toTeacherId);
+        .filter(r => Number(r.lectureSlot) === Number(slot) && r.status === 'pending')
+        .map(r => r.substituteTeacherId);
 
       let filtered = teachers.filter(t => !pendingRequestTeacherIds.includes(t._id));
 
@@ -257,7 +275,8 @@ export default function LeaveDetail() {
 
       <div className="lecture-slots" style={{ marginBottom: '3rem' }}>
         {leave.lecturesOnLeave.map(lecture => {
-          const slotRequests = requests.filter(r => r.lectureSlot === lecture.slot);
+          const slotRequests = requests.filter(r => Number(r.lectureSlot) === Number(lecture.slot));
+          const acceptedReqs = slotRequests.filter(r => r.status === 'accepted');
           const pendingReqs = slotRequests.filter(r => r.status === 'pending');
           const rejectedReqs = slotRequests.filter(r => r.status === 'rejected');
           // 'cancelled' requests are ignored as per user request to not show them as declined
@@ -320,6 +339,12 @@ export default function LeaveDetail() {
 
               {/* Pending & Rejected requests */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+                {acceptedReqs.map(r => (
+                  <div key={r._id} style={{ fontSize: '0.85rem', color: '#059669', padding: '0.5rem', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={14} /> Accepted by {r.toTeacher?.name}
+                  </div>
+                ))}
+
                 {pendingReqs.map(r => (
                   <div key={r._id} style={{ fontSize: '0.85rem', color: '#d97706', padding: '0.5rem', background: '#fef3c7', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span className="spinner" style={{ width: '12px', height: '12px', borderTopColor: '#d97706', borderColor: 'rgba(217, 119, 6, 0.2)', borderWidth: '2px' }}></span>
@@ -399,7 +424,7 @@ export default function LeaveDetail() {
                           </div>
                         </div>
                         {(() => {
-                          const existingReq = requests.find(r => r.toTeacherId === teacher._id && r.lectureSlot === selectedSlot);
+                          const existingReq = requests.find(r => r.substituteTeacherId === teacher._id && Number(r.lectureSlot) === Number(selectedSlot));
                           if (existingReq && existingReq.status === 'rejected') {
                             return (
                               <button className="btn btn-outline btn-sm" disabled style={{ opacity: 0.6, cursor: 'not-allowed', color: '#dc2626', borderColor: '#dc2626' }}>
