@@ -66,7 +66,7 @@ export default function Sidebar() {
 
       <aside className={`sidebar ${isMobileOpen ? 'open' : ''}`}>
         <div className="sidebar-logo" style={{ padding: '1rem', justifyContent: 'center' }}>
-          <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: '120px', height: 'auto' }} />
+          <img src="/src/assets/LeaveEase_logo.png" alt="LeaveEase Logo" style={{ width: '120px', height: 'auto' }} />
           <button className="mobile-close-btn" onClick={closeMobileMenu}>
             <X size={20} />
           </button>

@@ -46,6 +46,24 @@ export default function LandingPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', width: '100%', background: 'var(--bg-body)', position: 'relative', overflowX: 'hidden' }}>
 
+      <style>
+        {`
+          @media (max-width: 768px) {
+            .navbar-container {
+              padding: 1rem 1rem !important;
+            }
+            .navbar-buttons {
+              flex-direction: column !important;
+              gap: 0.5rem !important;
+            }
+            .navbar-buttons button {
+              font-size: 0.8rem !important;
+              padding: 0.5rem 1rem !important;
+            }
+          }
+        `}
+      </style>
+
       {/* Decorative Background Elements */}
       <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(216, 124, 36, 0.08) 0%, rgba(216,124,36,0) 70%)', borderRadius: '50%', zIndex: 0, pointerEvents: 'none' }}></div>
       <div style={{ position: 'absolute', top: '40%', right: '-10%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(232, 160, 75, 0.05) 0%, rgba(232,160,75,0) 70%)', borderRadius: '50%', zIndex: 0, pointerEvents: 'none' }}></div>
@@ -58,11 +76,11 @@ export default function LandingPage() {
         boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.05)' : 'none',
         borderBottom: scrolled ? '1px solid rgba(216,124,36,0.1)' : '1px solid transparent'
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: scrolled ? '1rem 2rem' : '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.3s ease' }}>
+        <div className="navbar-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: scrolled ? '1rem 2rem' : '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.3s ease' }}>
           <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: scrolled ? '120px' : '140px', height: 'auto', transition: 'width 0.3s ease' }} />
+            <img src="/src/assets/LeaveEase_logo.png" alt="LeaveEase Logo" style={{ width: scrolled ? '120px' : '140px', height: 'auto', transition: 'width 0.3s ease' }} />
           </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="navbar-buttons" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <a href="#vision" style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'none' }} className="d-md-block">Vision</a>
             <a href="#faq" style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'none', marginRight: '1rem' }} className="d-md-block">FAQ</a>
             <button onClick={() => navigate('/login')} className="btn btn-outline" style={{ padding: '0.6rem 1.4rem', borderRadius: '20px', fontSize: '0.9rem' }}>

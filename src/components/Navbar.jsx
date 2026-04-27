@@ -29,7 +29,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         <Link to="/dashboard" className="navbar-brand" style={{ display: 'flex', alignItems: 'center' }}>
-          <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: '100px', height: 'auto' }} />
+          <img src="/src/assets/LeaveEase_logo.png" alt="LeaveEase Logo" style={{ width: '100px', height: 'auto' }} />
         </Link>
 
         <ul className="navbar-nav">
