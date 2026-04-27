@@ -53,12 +53,22 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [leaves, incoming, h, o] = await Promise.all([
+      const [rawLeaves, incoming, h, o] = await Promise.all([
         getMyLeaves(user._id),
         getIncomingRequests(user._id),
         getHolidays(),
         getSaturdayOverrides()
       ]);
+
+      // Filter out cancelled leaves older than 15 minutes
+      const now = new Date();
+      const leaves = rawLeaves.filter(leave => {
+        if (leave.status === 'cancelled' && leave.cancelledAt) {
+          const diffMins = (now - new Date(leave.cancelledAt)) / (1000 * 60);
+          return diffMins <= 15;
+        }
+        return true;
+      });
 
       setStats({
         leaves: leaves.length,

@@ -65,6 +65,15 @@ db.exec(`
     FOREIGN KEY (substituteTeacherId) REFERENCES users (_id)
   );
 
+  CREATE TABLE IF NOT EXISTS passwordResetRequests (
+    _id TEXT PRIMARY KEY,
+    email TEXT,
+    teacherName TEXT,
+    role TEXT,
+    status TEXT DEFAULT 'pending',
+    createdAt TEXT
+  );
+
   CREATE TABLE IF NOT EXISTS holidays (
     _id TEXT PRIMARY KEY,
     date TEXT,
@@ -102,6 +111,8 @@ ensureColumn('users', 'lastActive', 'TEXT');
 ensureColumn('substitutionRequests', 'rejectionReason', 'TEXT');
 ensureColumn('leaves', 'isSubstitutionOnly', 'INTEGER DEFAULT 0');
 ensureColumn('timetableOverrides', 'followsDay', 'TEXT');
+ensureColumn('leaves', 'cancelledAt', 'TEXT');
+ensureColumn('users', 'linkedTeacherId', 'TEXT');
 
 const defaultTimetable = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] };
 const normalizeLeave = (leave) => {
@@ -321,6 +332,11 @@ app.put('/api/leaves/:id', (req, res) => {
     const stmt = db.prepare('SELECT * FROM leaves WHERE _id = ?');
     const leave = stmt.get(req.params.id);
     if (leave) {
+      // Auto-set cancelledAt when status changes to cancelled
+      if (req.body.status === 'cancelled' && leave.status !== 'cancelled') {
+        req.body.cancelledAt = new Date().toISOString();
+      }
+
       const updateFields = [];
       const values = [];
       Object.keys(req.body).forEach(key => {
@@ -348,6 +364,9 @@ app.put('/api/leaves/:id', (req, res) => {
 });
 
 app.delete('/api/leaves/:id', (req, res) => {
+  const deleteRequestsStmt = db.prepare('DELETE FROM substitutionRequests WHERE leaveId = ?');
+  deleteRequestsStmt.run(req.params.id);
+
   const stmt = db.prepare('DELETE FROM leaves WHERE _id = ?');
   const result = stmt.run(req.params.id);
   if (result.changes > 0) {
@@ -556,8 +575,8 @@ app.post('/api/auth/login', (req, res) => {
 // Password Reset Endpoints
 app.post('/api/auth/request-reset', (req, res) => {
   const { email } = req.body;
-  const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-  const user = stmt.get(email);
+  const userStmt = db.prepare('SELECT * FROM users WHERE email = ?');
+  const user = userStmt.get(email);
   
   if (!user) {
     return res.status(404).json({ error: 'No account found with this email.' });
@@ -568,20 +587,38 @@ app.post('/api/auth/request-reset', (req, res) => {
     return res.json({ developerMode: true, message: "Password change request has been sent. An automated notification has been delivered to the developer." });
   }
   
-  // For now, just return success (in a real app, you'd send an email)
-  res.json({ message: 'Password reset request submitted successfully.' });
+  // Check if a pending request already exists
+  const existingReq = db.prepare('SELECT * FROM passwordResetRequests WHERE email = ? AND status = ?').get(email, 'pending');
+  if (existingReq) {
+    return res.json({ message: 'A request is already pending. Please wait for admin approval.' });
+  }
+  
+  // Check if an approved request exists
+  const approvedReq = db.prepare('SELECT * FROM passwordResetRequests WHERE email = ? AND status = ?').get(email, 'approved');
+  if (approvedReq) {
+    return res.json({ message: 'Your request has been approved. You can set a new password now.' });
+  }
+  
+  // Store the password reset request
+  const _id = generateId();
+  db.prepare('INSERT INTO passwordResetRequests (_id, email, teacherName, role, status, createdAt) VALUES (?, ?, ?, ?, ?, ?)').run(
+    _id, email, user.name, user.role, 'pending', new Date().toISOString()
+  );
+  
+  res.json({ message: 'Password reset request submitted successfully. Please wait for admin approval.' });
 });
 
 app.get('/api/auth/reset-status/:email', (req, res) => {
   const email = decodeURIComponent(req.params.email);
-  // For now, return null (no pending requests)
-  res.json(null);
+  const reqStmt = db.prepare('SELECT * FROM passwordResetRequests WHERE email = ? ORDER BY createdAt DESC LIMIT 1');
+  const request = reqStmt.get(email);
+  res.json(request || null);
 });
 
 app.post('/api/auth/submit-password', (req, res) => {
   const { email, newPassword } = req.body;
-  const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-  const user = stmt.get(email);
+  const userStmt = db.prepare('SELECT * FROM users WHERE email = ?');
+  const user = userStmt.get(email);
   
   if (!user) {
     return res.status(404).json({ error: 'User not found.' });
@@ -591,27 +628,43 @@ app.post('/api/auth/submit-password', (req, res) => {
     return res.status(403).json({ error: "Security Restriction: Admin 1 password can only be changed by the developer." });
   }
   
+  // Verify an approved request exists
+  const approvedReq = db.prepare('SELECT * FROM passwordResetRequests WHERE email = ? AND status = ?').get(email, 'approved');
+  if (!approvedReq) {
+    return res.status(403).json({ error: 'No approved reset request found. Please request admin approval first.' });
+  }
+  
   const updateStmt = db.prepare('UPDATE users SET password = ? WHERE email = ?');
   updateStmt.run(newPassword, email);
+  
+  // Clear the approved request
+  db.prepare('DELETE FROM passwordResetRequests WHERE email = ?').run(email);
   
   res.json({ message: 'Password updated successfully.' });
 });
 
 // Admin Password Request Management
 app.get('/api/auth/password-requests', (req, res) => {
-  // For now, return empty array (no pending requests)
-  res.json([]);
+  const requests = db.prepare('SELECT * FROM passwordResetRequests ORDER BY createdAt DESC').all();
+  res.json(requests);
 });
 
 app.post('/api/auth/approve-request/:requestId', (req, res) => {
   const { requestId } = req.params;
-  // For now, just return success
+  const reqStmt = db.prepare('SELECT * FROM passwordResetRequests WHERE _id = ?');
+  const request = reqStmt.get(requestId);
+  
+  if (!request) {
+    return res.status(404).json({ error: 'Request not found.' });
+  }
+  
+  db.prepare('UPDATE passwordResetRequests SET status = ? WHERE _id = ?').run('approved', requestId);
   res.json({ message: 'Password request approved.' });
 });
 
 app.delete('/api/auth/clear-request/:requestId', (req, res) => {
   const { requestId } = req.params;
-  // For now, just return success
+  db.prepare('DELETE FROM passwordResetRequests WHERE _id = ?').run(requestId);
   res.json({ message: 'Password request cleared.' });
 });
 

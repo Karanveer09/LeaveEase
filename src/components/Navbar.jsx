@@ -28,8 +28,8 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to="/dashboard" className="navbar-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <GraduationCap size={24} style={{ color: 'var(--accent-primary)' }} /> <span>LeaveFlow</span>
+        <Link to="/dashboard" className="navbar-brand" style={{ display: 'flex', alignItems: 'center' }}>
+          <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: '100px', height: 'auto' }} />
         </Link>
 
         <ul className="navbar-nav">

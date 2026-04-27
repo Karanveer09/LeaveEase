@@ -19,20 +19,15 @@ export default function Footer() {
         textAlign: 'center'
       }}>
         <div style={{
-          width: '48px',
-          height: '48px',
-          background: 'rgba(255,255,255,0.1)',
-          borderRadius: '12px',
+          width: '150px',
+          background: 'transparent',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'white',
-          fontSize: '1.5rem',
           marginBottom: '1.5rem'
         }}>
-          <Sparkles size={24} fill="white" />
+          <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: '100%', height: 'auto' }} />
         </div>
-        <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: 'white' }}>LeaveFlow</h2>
         <p style={{ color: 'rgba(255,255,255,0.6)', maxWidth: '400px', marginBottom: '2rem' }}>
           Built specifically to solve real university scheduling challenges.
         </p>

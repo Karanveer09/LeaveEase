@@ -66,7 +66,7 @@ export default function ProfileSetup() {
           </div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>Welcome, {user?.name}!</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem' }}>
-            Set up your weekly timetable to get started with LeaveFlow
+            Set up your weekly timetable to get started with LeaveEase
           </p>
         </div>
 

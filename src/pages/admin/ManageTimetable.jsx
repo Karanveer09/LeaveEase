@@ -41,6 +41,8 @@ export default function ManageTimetable() {
   const [satFollows, setSatFollows] = useState('monday');
   const [isSettingSat, setIsSettingSat] = useState(false);
 
+  const isAdmin1 = user?.email === 'admin1@global.edu';
+
   useEffect(() => { 
     fetchTeachers(); 
     fetchOverrides();
@@ -512,23 +514,29 @@ export default function ManageTimetable() {
           <CalendarDays size={20} className="text-warning" style={{ color: '#f59e0b' }} /> Configure Working Saturday
         </h2>
         
+        {!isAdmin1 && (
+          <div className="alert alert-warning" style={{ marginBottom: '1.5rem', padding: '0.75rem', fontSize: '0.85rem' }}>
+            Only Admin 1 can configure working Saturdays.
+          </div>
+        )}
+        
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
           <form onSubmit={handleSetSaturday} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">Select Saturday</label>
-                <input type="date" className="form-input" value={satDate} onChange={e => setSatDate(e.target.value)} required />
+                <input type="date" className="form-input" value={satDate} onChange={e => setSatDate(e.target.value)} required disabled={!isAdmin1 || isSettingSat}/>
               </div>
               <div className="form-group">
                 <label className="form-label">Follows Timetable</label>
-                <select className="form-input" value={satFollows} onChange={e => setSatFollows(e.target.value)}>
+                <select className="form-input" value={satFollows} onChange={e => setSatFollows(e.target.value)} disabled={!isAdmin1 || isSettingSat}>
                   {DAYS.map(d => (
                     <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
                   ))}
                 </select>
               </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={isSettingSat} style={{ background: '#f59e0b', borderColor: '#f59e0b' }}>
+            <button type="submit" className="btn btn-primary" disabled={!isAdmin1 || isSettingSat} style={{ background: '#f59e0b', borderColor: '#f59e0b' }}>
               {isSettingSat ? <span className="spinner"></span> : 'Set Working Saturday'}
             </button>
           </form>
@@ -547,9 +555,11 @@ export default function ManageTimetable() {
                         <Clock size={12} /> Follows {o.followsDay}
                       </div>
                     </div>
-                    <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => handleDeleteOverride(o._id)}>
-                      <Trash2 size={16} />
-                    </button>
+                    {isAdmin1 && (
+                      <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => handleDeleteOverride(o._id)}>
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
