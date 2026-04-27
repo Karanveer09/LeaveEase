@@ -11,9 +11,13 @@ import {
   AlertCircle, 
   AlertTriangle,
   User,
+  Users,
   ShieldCheck,
   BookOpen,
-  Download
+  Download,
+  CalendarDays,
+  Calendar,
+  BarChart3
 } from 'lucide-react';
 
 const MONTHS = [
@@ -29,6 +33,7 @@ export default function AdminDashboard() {
   const [passwordReqs, setPasswordReqs] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  const [viewMode, setViewMode] = useState('daily'); // 'daily' or 'monthly'
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedTeacherId, setSelectedTeacherId] = useState('all');
 
@@ -69,12 +74,19 @@ export default function AdminDashboard() {
     }
   };
 
-  // Filter leaves by month and teacher
+  // Filter leaves based on view mode
   const getFilteredLeaves = () => {
-    let result = leaves.filter(l => {
-      const leaveDate = new Date(l.date);
-      return leaveDate.getMonth() === selectedMonth;
-    });
+    let result;
+    
+    if (viewMode === 'daily') {
+      const today = new Date().toISOString().split('T')[0];
+      result = leaves.filter(l => l.date === today && l.status !== 'cancelled');
+    } else {
+      result = leaves.filter(l => {
+        const leaveDate = new Date(l.date);
+        return leaveDate.getMonth() === selectedMonth && l.status !== 'cancelled';
+      });
+    }
 
     if (selectedTeacherId !== 'all') {
       result = result.filter(l => l.applicantId === selectedTeacherId);
@@ -84,10 +96,42 @@ export default function AdminDashboard() {
 
   const filteredLeaves = getFilteredLeaves();
 
+  // Compute accurate stats
+  const computeStats = () => {
+    const totalLeaves = filteredLeaves.length;
+    
+    // Unique teachers on leave
+    const teacherIdsOnLeave = [...new Set(filteredLeaves.map(l => l.applicantId))];
+    const teachersOnLeave = teacherIdsOnLeave.length;
+
+    // Total lectures from all leaves (only active, not cancelled)
+    let totalLectures = 0;
+    let coveredLectures = 0;
+    let uncoveredLectures = 0;
+
+    filteredLeaves.forEach(leave => {
+      const activeLectures = (leave.lecturesOnLeave || []).filter(l => !l.cancelled);
+      totalLectures += activeLectures.length;
+      coveredLectures += activeLectures.filter(l => l.covered).length;
+      uncoveredLectures += activeLectures.filter(l => !l.covered).length;
+    });
+
+    return {
+      totalLeaves,
+      teachersOnLeave,
+      totalLectures,
+      coveredLectures,
+      uncoveredLectures
+    };
+  };
+
+  const stats = computeStats();
+
   // Flatten lectures for the feed list format
   const feedItems = [];
   filteredLeaves.forEach(leave => {
-    leave.lecturesOnLeave.forEach(lec => {
+    (leave.lecturesOnLeave || []).forEach(lec => {
+      if (lec.cancelled) return; // skip cancelled slots
       feedItems.push({
         id: `${leave._id}-${lec.slot}`,
         date: leave.date,
@@ -104,11 +148,6 @@ export default function AdminDashboard() {
 
   // Sort by date (descending)
   feedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const totalLeaves = filteredLeaves.length;
-  const fullyCovered = filteredLeaves.filter(l => l.status === 'fully_covered').length;
-  const partiallyCovered = filteredLeaves.filter(l => l.status === 'partially_covered').length;
-  const uncovered = filteredLeaves.filter(l => l.status === 'pending').length;
 
   const handleApprovePassword = async (reqId) => {
     try {
@@ -141,6 +180,8 @@ export default function AdminDashboard() {
     );
   }
 
+  const todayStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
     <div className="page-container">
       <div className="page-header animate-in" style={{ textAlign: 'left' }}>
@@ -148,18 +189,69 @@ export default function AdminDashboard() {
         <p className="page-subtitle">Professional leave reporting and department overview</p>
       </div>
 
-      {/* Filters (Month & Teacher) */}
+      {/* View Mode Toggle + Filters */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'center' }} className="animate-in">
-        <select 
-          className="form-select" 
-          style={{ width: 'auto', minWidth: '150px', margin: 0, padding: '0.5rem 1rem', borderRadius: '20px', fontWeight: 600 }}
-          value={selectedMonth} 
-          onChange={(e) => setSelectedMonth(Number(e.target.value))}
-        >
-          {MONTHS.map((month, idx) => (
-            <option key={idx} value={idx}>{month}</option>
-          ))}
-        </select>
+        {/* Toggle Daily / Monthly */}
+        <div style={{ 
+          display: 'inline-flex', 
+          background: 'var(--bg-card)', 
+          border: '1px solid var(--border-color)', 
+          borderRadius: '25px', 
+          padding: '0.25rem',
+          gap: '0.25rem'
+        }}>
+          <button 
+            onClick={() => setViewMode('daily')}
+            style={{ 
+              padding: '0.5rem 1.25rem', 
+              borderRadius: '20px', 
+              border: 'none', 
+              cursor: 'pointer',
+              fontWeight: 700, 
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: viewMode === 'daily' ? 'var(--accent-primary)' : 'transparent',
+              color: viewMode === 'daily' ? 'white' : 'var(--text-secondary)',
+              transition: 'all 0.25s ease'
+            }}
+          >
+            <Calendar size={15} /> Today
+          </button>
+          <button 
+            onClick={() => setViewMode('monthly')}
+            style={{ 
+              padding: '0.5rem 1.25rem', 
+              borderRadius: '20px', 
+              border: 'none', 
+              cursor: 'pointer',
+              fontWeight: 700, 
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: viewMode === 'monthly' ? 'var(--accent-primary)' : 'transparent',
+              color: viewMode === 'monthly' ? 'white' : 'var(--text-secondary)',
+              transition: 'all 0.25s ease'
+            }}
+          >
+            <CalendarDays size={15} /> Monthly
+          </button>
+        </div>
+
+        {viewMode === 'monthly' && (
+          <select 
+            className="form-select" 
+            style={{ width: 'auto', minWidth: '150px', margin: 0, padding: '0.5rem 1rem', borderRadius: '20px', fontWeight: 600 }}
+            value={selectedMonth} 
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+          >
+            {MONTHS.map((month, idx) => (
+              <option key={idx} value={idx}>{month}</option>
+            ))}
+          </select>
+        )}
         
         <select 
           className="form-select" 
@@ -172,39 +264,95 @@ export default function AdminDashboard() {
             <option key={t._id} value={t._id}>{t.name}</option>
           ))}
         </select>
+
+        {viewMode === 'daily' && (
+          <div style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Calendar size={14} /> {todayStr}
+          </div>
+        )}
       </div>
 
-      {/* Stats Grid */}
-      <div className="stats-grid animate-in stagger-1" style={{ marginBottom: '2rem' }}>
+      {/* Stats Grid — 5 cards */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+        gap: '1rem', 
+        marginBottom: '2rem' 
+      }} className="animate-in stagger-1">
+        {/* Teachers on Leave */}
+        <div className="stat-card">
+          <div className="stat-icon" style={{ color: '#6366f1', background: 'rgba(99, 102, 241, 0.1)' }}>
+            <Users size={22} />
+          </div>
+          <div className="stat-value">{stats.teachersOnLeave}</div>
+          <div className="stat-label">Teachers on Leave</div>
+        </div>
+        {/* Total Leave Applications */}
         <div className="stat-card">
           <div className="stat-icon" style={{ color: 'var(--accent-primary)', background: 'var(--bg-glass-hover)' }}>
             <ClipboardList size={22} />
           </div>
-          <div className="stat-value">{totalLeaves}</div>
-          <div className="stat-label">Total Leaves</div>
+          <div className="stat-value">{stats.totalLeaves}</div>
+          <div className="stat-label">Leave Applications</div>
         </div>
+        {/* Total Lectures on Leave */}
+        <div className="stat-card">
+          <div className="stat-icon" style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)' }}>
+            <BookOpen size={22} />
+          </div>
+          <div className="stat-value">{stats.totalLectures}</div>
+          <div className="stat-label">Total Lectures</div>
+        </div>
+        {/* Lectures Covered */}
         <div className="stat-card">
           <div className="stat-icon" style={{ color: '#059669', background: 'rgba(16, 185, 129, 0.1)' }}>
             <CheckCircle2 size={22} />
           </div>
-          <div className="stat-value">{fullyCovered}</div>
-          <div className="stat-label">Fully Covered</div>
+          <div className="stat-value">{stats.coveredLectures}</div>
+          <div className="stat-label">Lectures Covered</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ color: '#d97706', background: 'rgba(245, 158, 11, 0.1)' }}>
-            <Clock size={22} />
-          </div>
-          <div className="stat-value">{partiallyCovered}</div>
-          <div className="stat-label">Partially Covered</div>
-        </div>
+        {/* Lectures Not Covered */}
         <div className="stat-card">
           <div className="stat-icon" style={{ color: '#dc2626', background: 'rgba(239, 68, 68, 0.1)' }}>
             <XCircle size={22} />
           </div>
-          <div className="stat-value">{uncovered}</div>
-          <div className="stat-label">Uncovered</div>
+          <div className="stat-value">{stats.uncoveredLectures}</div>
+          <div className="stat-label">Lectures Not Covered</div>
         </div>
       </div>
+
+      {/* Coverage Progress Bar */}
+      {stats.totalLectures > 0 && (
+        <div className="animate-in stagger-2" style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <BarChart3 size={14} /> Coverage Rate
+            </span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: stats.coveredLectures === stats.totalLectures ? '#059669' : 'var(--accent-primary)' }}>
+              {Math.round((stats.coveredLectures / stats.totalLectures) * 100)}%
+            </span>
+          </div>
+          <div style={{ width: '100%', height: '10px', background: 'rgba(239, 68, 68, 0.12)', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ 
+              width: `${(stats.coveredLectures / stats.totalLectures) * 100}%`, 
+              height: '100%', 
+              background: 'linear-gradient(90deg, #059669, #10b981)', 
+              borderRadius: '8px',
+              transition: 'width 0.5s ease'
+            }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669', display: 'inline-block' }}></span>
+              Covered: {stats.coveredLectures}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', display: 'inline-block' }}></span>
+              Not Covered: {stats.uncoveredLectures}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Password Reset Requests Section */}
       {isRootAdmin && passwordReqs.length > 0 && (
@@ -284,10 +432,17 @@ export default function AdminDashboard() {
         <div className="animate-in stagger-2">
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Lecture Substitutions
+            <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>
+              ({feedItems.length} record{feedItems.length !== 1 ? 's' : ''})
+            </span>
           </h2>
           {feedItems.length === 0 ? (
             <div className="empty-state card-flat" style={{ padding: '3rem 1.5rem' }}>
-              <p className="empty-state-text">No records found for the selected month.</p>
+              <p className="empty-state-text">
+                {viewMode === 'daily' 
+                  ? 'No leave records for today.' 
+                  : 'No records found for the selected month.'}
+              </p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '12px' }}>

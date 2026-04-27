@@ -3,12 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="LeaveFlow - Leave Application & Substitution Management System for Teachers and Lecturers" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
-    <title>LeaveFlow | Leave Application Portal</title>
+    <meta name="description" content="LeaveEase - Leave Application & Substitution Management System for Teachers and Lecturers" />
+    <link rel="icon" type="image/png" href="/src/assets/logo-final.png" />
+    <title>LeaveEase | Leave Application Portal</title>
+    <style>
+      .initial-loading-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+        background-color: #faf8f5;
+        font-family: 'Outfit', system-ui, sans-serif;
+      }
+      .initial-spinner {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 4px solid rgba(227, 134, 39, 0.12);
+        border-top-color: #d87c24;
+        animation: initial-spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        margin-bottom: 1.5rem;
+      }
+      @keyframes initial-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .initial-loading-text {
+        color: #1c1e21;
+        font-weight: 700;
+        font-size: 1.25rem;
+        letter-spacing: 0.05em;
+        animation: initial-pulse 2s infinite;
+      }
+      @keyframes initial-pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="initial-loading-container">
+        <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style="width: 120px; height: auto; margin-bottom: 2rem;" />
+        <div class="initial-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

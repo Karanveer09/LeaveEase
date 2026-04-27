@@ -31,10 +31,10 @@ export default function LandingPage() {
 
 
   const faqs = [
-    { q: "How do I request a substitute?", a: "Simply log into the Faculty Portal, select the 'Apply Leave' module, choose your inactive slots, and select an available teacher from the automated drop-down. LeaveFlow handles the rest!" },
+    { q: "How do I request a substitute?", a: "Simply log into the Faculty Portal, select the 'Apply Leave' module, choose your inactive slots, and select an available teacher from the automated drop-down. LeaveEase handles the rest!" },
     { q: "Can the Admin override requests?", a: "Yes. Admins have a dedicated dashboard to monitor real-time faculty availability, approve master timetables, and override or reassign substitutions if there's a conflict." },
     { q: "What happens if a teacher declines my request?", a: "If your chosen substitute declines, the system automatically surfaces the next fully available teacher for that specific slot, ensuring your classes are always covered." },
-    { q: "How are the initials and timetables generated?", a: "LeaveFlow seamlessly integrates your institution's raw dataset mapping real-time exact working hours to automate your weekly timetables right into your dashboard." }
+    { q: "How are the initials and timetables generated?", a: "LeaveEase seamlessly integrates your institution's raw dataset mapping real-time exact working hours to automate your weekly timetables right into your dashboard." }
   ];
 
   const features = [
@@ -59,11 +59,8 @@ export default function LandingPage() {
         borderBottom: scrolled ? '1px solid rgba(216,124,36,0.1)' : '1px solid transparent'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: scrolled ? '1rem 2rem' : '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.3s ease' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, fontSize: '1.5rem', color: 'var(--text-primary)', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div style={{ width: '36px', height: '36px', background: 'var(--gradient-primary)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(216,124,36,0.3)' }}>
-              <Sparkles size={18} fill="currentColor" />
-            </div>
-            <span style={{ letterSpacing: '-0.5px' }}>LeaveFlow</span>
+          <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: scrolled ? '120px' : '140px', height: 'auto', transition: 'width 0.3s ease' }} />
           </div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <a href="#vision" style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'none' }} className="d-md-block">Vision</a>
@@ -189,7 +186,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
             <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '1rem' }}>Frequently Asked Questions</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>Everything you need to know about the LeaveFlow infrastructure.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>Everything you need to know about the LeaveEase infrastructure.</p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

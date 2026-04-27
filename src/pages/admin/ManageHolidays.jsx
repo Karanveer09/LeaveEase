@@ -23,6 +23,8 @@ export default function ManageHolidays() {
   const [isAdding, setIsAdding] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ show: false, id: null, name: '' });
 
+  const isAdmin1 = user?.email === 'admin1@global.edu';
+
   useEffect(() => { fetchHolidays(); }, []);
 
   const fetchHolidays = async () => {
@@ -112,6 +114,11 @@ export default function ManageHolidays() {
           <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Plus size={20} className="text-primary" /> Declare New Holiday
           </h2>
+          {!isAdmin1 && (
+            <div className="alert alert-warning" style={{ marginBottom: '1rem', padding: '0.75rem', fontSize: '0.85rem' }}>
+              Only Admin 1 can declare new holidays.
+            </div>
+          )}
           <form onSubmit={handleAdd}>
             <div className="form-group">
               <label className="form-label">Holiday Date</label>
@@ -121,6 +128,7 @@ export default function ManageHolidays() {
                 value={newDate} 
                 onChange={e => setNewDate(e.target.value)} 
                 required 
+                disabled={!isAdmin1 || isAdding}
               />
             </div>
             <div className="form-group">
@@ -132,9 +140,10 @@ export default function ManageHolidays() {
                 value={newName} 
                 onChange={e => setNewName(e.target.value)} 
                 required 
+                disabled={!isAdmin1 || isAdding}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-full" disabled={isAdding}>
+            <button type="submit" className="btn btn-primary btn-full" disabled={!isAdmin1 || isAdding}>
               {isAdding ? <span className="spinner"></span> : 'Add Holiday'}
             </button>
           </form>
@@ -191,14 +200,16 @@ export default function ManageHolidays() {
                       </div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{formatDate(h.date)}</div>
                     </div>
-                    <button 
-                      className="btn btn-ghost btn-sm" 
-                      style={{ color: '#ef4444' }}
-                      onClick={() => handleDelete(h._id)}
-                      title="Remove Holiday"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {isAdmin1 && (
+                      <button 
+                        className="btn btn-ghost btn-sm" 
+                        style={{ color: '#ef4444' }}
+                        onClick={() => handleDelete(h._id)}
+                        title="Remove Holiday"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 );
               })}

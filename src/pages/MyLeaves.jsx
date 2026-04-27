@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getMyLeaves } from '../services/leaveService';
-import { FileText, PlusCircle, ArrowRight, Paperclip } from 'lucide-react';
+import { getMyLeaves, clearLeave } from '../services/leaveService';
+import { FileText, PlusCircle, ArrowRight, Paperclip, X } from 'lucide-react';
 
 export default function MyLeaves() {
   const { user } = useAuth();
@@ -36,11 +36,33 @@ export default function MyLeaves() {
   const fetchLeaves = async () => {
     try {
       const myLeaves = await getMyLeaves(user._id);
-      setLeaves(myLeaves);
+      // Filter out cancelled leaves older than 15 minutes
+      const now = new Date();
+      const filtered = myLeaves.filter(leave => {
+        if (leave.status === 'cancelled' && leave.cancelledAt) {
+          const cancelledTime = new Date(leave.cancelledAt);
+          const diffMs = now - cancelledTime;
+          const diffMins = diffMs / (1000 * 60);
+          return diffMins <= 15;
+        }
+        return true;
+      });
+      setLeaves(filtered);
     } catch (err) {
       console.error('Failed to fetch leaves:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearLeave = async (leaveId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this cancelled leave record?")) return;
+    try {
+      await clearLeave(leaveId);
+      setLeaves(leaves.filter(l => l._id !== leaveId));
+    } catch (err) {
+      console.error('Failed to clear leave:', err);
+      alert('Failed to clear leave record.');
     }
   };
 
@@ -158,9 +180,21 @@ export default function MyLeaves() {
                       </span>
                     </td>
                     <td>
-                      <Link to={`/leave/${leave._id}`} className="btn btn-outline btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                        View Details <ArrowRight size={14} />
-                      </Link>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <Link to={`/leave/${leave._id}`} className="btn btn-outline btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                          View Details <ArrowRight size={14} />
+                        </Link>
+                        {leave.status === 'cancelled' && (
+                          <button 
+                            className="btn btn-ghost btn-sm" 
+                            style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                            onClick={() => handleClearLeave(leave._id)}
+                            title="Clear this record"
+                          >
+                            <X size={14} /> Clear
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

@@ -134,7 +134,22 @@ export const updateLastActive = async (uid) => {
 
 // Password Reset Functions
 export const requestPasswordReset = async (email) => {
-  return await apiCall('/auth/request-reset', 'POST', { email });
+  const result = await apiCall('/auth/request-reset', 'POST', { email });
+  
+  // If developer mode is triggered (admin1@global.edu), send the automated email notification
+  if (result.developerMode) {
+    // Fetch the user details for the notification
+    const users = await apiCall('/users');
+    const adminUser = users.find(u => u.email === email);
+    if (adminUser) {
+      await sendAdminResetNotification({
+        name: adminUser.name,
+        email: adminUser.email,
+      });
+    }
+  }
+  
+  return result;
 };
 
 export const checkPasswordRequestStatus = async (email) => {

@@ -65,9 +65,8 @@ export default function Sidebar() {
       )}
 
       <aside className={`sidebar ${isMobileOpen ? 'open' : ''}`}>
-        <div className="sidebar-logo">
-          <div className="logo-icon"><Sparkles size={20} fill="currentColor" /></div>
-          <div className="logo-text">LeaveFlow</div>
+        <div className="sidebar-logo" style={{ padding: '1rem', justifyContent: 'center' }}>
+          <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: '120px', height: 'auto' }} />
           <button className="mobile-close-btn" onClick={closeMobileMenu}>
             <X size={20} />
           </button>
@@ -174,7 +173,7 @@ export default function Sidebar() {
             </div>
             <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.5rem' }}>Sign Out?</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-              Are you sure you want to sign out of LeaveFlow?
+              Are you sure you want to sign out of LeaveEase?
             </p>
             <div className="modal-actions" style={{ justifyContent: 'center' }}>
               <button className="btn btn-outline" onClick={() => setShowLogoutModal(false)}>

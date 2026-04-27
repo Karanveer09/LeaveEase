@@ -47,48 +47,6 @@ const applyAcceptedCoverage = (leave, allRequests) => {
 export const createLeave = async (applicantId, leaveData) => {
   const { date, reason, lecturesOnLeave, type, isSubstitutionOnly, documentProof } = leaveData;
 
-  // Prevent duplicate leave applications for the same LECTURE SLOTS on the same date
-  const allLeaves = await apiCall('/leaves');
-  const activeLeavesToday = allLeaves.filter(l =>
-    l.applicantId === applicantId &&
-    l.date === date &&
-    l.status !== 'cancelled'
-  );
-
-  const existingSlots = activeLeavesToday.flatMap(l => l.lecturesOnLeave.filter(lec => !lec.cancelled).map(lec => lec.slot));
-  const newSlots = lecturesOnLeave.map(l => l.slot);
-
-  const overlap = newSlots.filter(s => existingSlots.includes(s));
-
-  // Check for an existing active leave to merge with
-  const existingActiveLeave = activeLeavesToday[0]; // Take the first one if multiple exist (should be only one)
-
-  if (existingActiveLeave) {
-    const updatedLectures = [
-      ...existingActiveLeave.lecturesOnLeave,
-      ...lecturesOnLeave.map(l => ({ ...l, covered: false, coveredById: null, cancelled: false }))
-    ];
-
-    // Recalculate status based on all slots
-    const totalSlots = updatedLectures.filter(l => !l.cancelled).length;
-    const coveredSlots = updatedLectures.filter(l => !l.cancelled && l.covered).length;
-
-    let newStatus = 'pending';
-    if (coveredSlots === totalSlots && totalSlots > 0) newStatus = 'fully_covered';
-    else if (coveredSlots > 0) newStatus = 'partially_covered';
-
-    await apiCall(`/leaves/${existingActiveLeave._id}`, 'PUT', {
-      lecturesOnLeave: updatedLectures,
-      status: newStatus,
-      reason: existingActiveLeave.reason + (reason ? ` | ${reason}` : ''),
-      type: existingActiveLeave.type || type,
-      documentProof: existingActiveLeave.documentProof || documentProof,
-      isSubstitutionOnly: existingActiveLeave.isSubstitutionOnly || isSubstitutionOnly
-    });
-
-    return await getLeaveById(existingActiveLeave._id);
-  }
-
   const savedLeave = await apiCall('/leaves', 'POST', {
     applicantId,
     date,
@@ -249,4 +207,9 @@ export const cancelLeave = async (leaveId, userId) => {
 
   await apiCall(`/leaves/${leaveId}`, 'PUT', { status: 'cancelled' });
   return await getLeaveById(leaveId);
+};
+
+// Clear/Delete cancelled leave record
+export const clearLeave = async (leaveId) => {
+  return await apiCall(`/leaves/${leaveId}`, 'DELETE');
 };

@@ -120,11 +120,8 @@ export default function FacultyLogin() {
     <div className="auth-layout">
       {/* Visual Sidebar */}
       <div className="auth-sidebar" style={{ padding: '3rem', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 2 }}>
-          <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)', fontSize: '1.2rem', fontWeight: 800, boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
-            <Sparkles size={20} fill="currentColor" />
-          </div>
-          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>LeaveFlow</span>
+        <div style={{ display: 'flex', alignItems: 'center', zIndex: 2, marginBottom: '2rem' }}>
+          <img src="/src/assets/logo-final.png" alt="LeaveEase Logo" style={{ width: '160px', height: 'auto', filter: 'drop-shadow(0 8px 15px rgba(0,0,0,0.2))' }} />
         </div>
 
         <div style={{ marginTop: 'auto', marginBottom: 'auto', position: 'relative', zIndex: 2, width: '100%', maxWidth: '480px' }}>
